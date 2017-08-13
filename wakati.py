@@ -7,6 +7,8 @@ logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
 logger = logging.getLogger(__name__)
 
+FILE_WAKATI = 'data/wakati.txt'
+
 def extract_words(sentence):
     """
     日本語で名詞 or 形容詞を取得
@@ -52,7 +54,6 @@ def save(words):
     """
     分かち書きしたものを保存
     """
-    FILE_WAKATI = 'wakati.txt'
     with open(FILE_WAKATI, 'w') as f:
         for w in words:
             f.writelines(' '.join(w))
