@@ -45,7 +45,7 @@ $ export FUN2VEC_SECRET_PASSWORD=xxxxx
 ### テスト
 実行例
 ```bash
-$ python -m unittest tests.test_extract_funs
+$ python -m unittest tests.test_dictionary
 ```
 
 #### 補足  
