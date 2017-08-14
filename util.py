@@ -9,6 +9,10 @@ logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
 logger = logging.getLogger(__name__)
 
+def read_sql(file_path):
+    with open(file_path, 'r') as f:
+        sql = f.read()
+    return sql
 
 def read_secrets(key):
     return decrypt().get(key)
