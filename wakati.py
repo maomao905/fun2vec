@@ -43,9 +43,7 @@ def check_ja(surface):
         return False
 
 def filter_feature(features):
-    if features[0] == '名詞' and features[1] not in ['代名詞', '数']:
-        return True
-    elif features[0] == '形容詞':
+    if features[0] == '名詞' and features[1] in ['一般', '固有名詞', 'サ変接続']:
         return True
     else:
         return False
