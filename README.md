@@ -42,6 +42,12 @@ $ export FUN2VEC_SECRET_PASSWORD=xxxxx
 ```
 パスワードがわからない方は @maomao905 まで  
 
+### テスト
+実行例
+```bash
+$ python -m unittest tests.test_extract_funs
+```
+
 #### 補足  
 Twitterデータscraping時に以下のようなエラー(絵文字が入っていると文字コードエラーになる)になった場合
 ```
