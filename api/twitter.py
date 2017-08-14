@@ -24,10 +24,10 @@ def extract_user_info(info):
 
 def save_user_info(session, user_info):
     """
-    プロフィールが存在するもののみ保存
-    idがDBになければ保存
+    プロフィールが存在し、公式アカウントではないもので
+    id(primary_key)がDBになければ保存
     """
-    if user_info and user_info['description']:
+    if user_info and user_info['description'] and user_info['verified'] == 0:
         if session.query(User).filter_by(id=user_info['id']).count() == 0:
             user = User(**user_info)
             session.add(user)
@@ -36,7 +36,7 @@ def save_user_info(session, user_info):
 manager = Manager(usage='Scraping Twitter profile data')
 @manager.command
 def scrape():
-    'Scrape Twitter profile data'
+    'Scrape Twitter profile data from Twitter API'
     secret = read_secrets('twitter')
     auth = OAuth1(
             secret['consumer_key'],
