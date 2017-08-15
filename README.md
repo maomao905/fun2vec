@@ -5,7 +5,7 @@
 引数は何個でも指定可能  
 引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力
 ```bash
-$ python fun2vec.py 機械学習 ビール アニメ
+$ python word2vec.py 機械学習 ビール アニメ
 ```
 
 ### コマンド使い方     
@@ -15,7 +15,7 @@ $ python manage.py
 ```
 コマンド実行例
 ```bash
-$ python manage.py fun2vec create_model
+$ python manage.py word2vec create_model
 ```
 
 |親コマンド|子コマンド|説明|
@@ -24,7 +24,7 @@ $ python manage.py fun2vec create_model
 |util|encrypt|秘密情報(secrets.yml)を暗号化します(秘密情報を編集した後暗号化するのに使用)|
 |util|decrypt_dump|秘密情報(secrets.yml)を復号化します(秘密情報を編集するのに使用)|
 |twitter|scrape|TwitterプロフィールデータをTwitter APIを叩いて収集します|
-|fun2vec|create_model|Twitterプロフィールデータを形態素解析し、分かち書きした後word2vecモデルを新規作成します|
+|word2vec|create_model|Twitterプロフィールデータを形態素解析し、分かち書きした後word2vecモデルを新規作成します|
 
 ### 環境構築  
 ・MySQLインストール  

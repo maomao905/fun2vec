@@ -5,7 +5,7 @@ from wakati import extract_words
 import re
 from itertools import combinations
 from collections import defaultdict
-import fun2vec
+import word2vec
 import random
 import pickle
 import logging
@@ -32,7 +32,7 @@ def get_best_profile():
     logger.info('Running query...\n{}'.format(sql))
     res = session.query(User.description).from_statement(text(sql)).all()
     logger.info('Analyze {} profiles'.format(len(res)))
-    model = fun2vec.load_model()
+    model = word2vec.load_model()
     user_funs = []
     for profile in res:
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
@@ -48,7 +48,7 @@ def extend_funs(user_funs):
     ユーザーの興味データを拡張し、辞書を作る
     """
     # Twitterプロフィール情報から作成したword2vecモデル
-    model = fun2vec.load_model()
+    model = word2vec.load_model()
     # 興味辞書
     fun2id = defaultdict(lambda: len(fun2id))
     for funs in user_funs:
