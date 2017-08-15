@@ -55,13 +55,14 @@ def save(words):
     with open(FILE_WAKATI, 'w') as f:
         for w in words:
             f.writelines(' '.join(w))
+            f.write('\n')
     logger.info('Saved {} wakti sentences in {}'.format(len(words), FILE_WAKATI))
 
 def create_wakati():
     words = []
     session = create_session()
     logger.info('Fetching twitter profile data from DB...')
-    res = session.query(User.description).all()
+    res = session.query(User.description).filter(User.verified==0).all() # 公式アカウントは除く
     logger.info('Extracting words from twitter profile...')
     SEP_LENGTH = 100 # 長すぎるとsengmentation failedになるので100で区切り、新しい文章とする
     for profile in res:
