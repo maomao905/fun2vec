@@ -8,6 +8,7 @@ from pprint import pprint
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit import prompt
 import argparse
+from collections import OrderedDict
 
 logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
@@ -47,22 +48,25 @@ def create_fun2vec():
             funs.append(reverse_dictionary[fun_id])
         sentences.append(funs)
     # defaultでcbowらしい
-    model = word2vec.Word2Vec(sentences, size=200, min_count=10, window=20)
+    model = word2vec.Word2Vec(sentences, size=200, min_count=20, window=20)
     model.save(FILE_FUN2VEC)
     logger.info('Saved model in {}'.format(FILE_FUN2VEC))
 
 def load_model(model_name):
-    from collections import OrderedDict
+    if model_name == 'word2vec':
+        return word2vec.Word2Vec.load(FILE_WORD2VEC)
+    if model_name == 'fun2vec':
+        return word2vec.Word2Vec.load(FILE_FUN2VEC)
+
+def main(args):
+    model_name = args.model
+    topn = int(args.topn)
+    logging.getLogger().setLevel(logging.ERROR)
     models = OrderedDict()
     if model_name in ['word2vec', 'all']:
-        models['word2vec'] = word2vec.Word2Vec.load(FILE_WORD2VEC)
+        models['word2vec'] = load_model('word2vec')
     if model_name in ['fun2vec', 'all']:
-        models['fun2vec'] = word2vec.Word2Vec.load(FILE_FUN2VEC)
-    return models
-
-def main(model_name):
-    logging.getLogger().setLevel(logging.ERROR)
-    models = load_model(model_name)
+        models['fun2vec'] = load_model('fun2vec')
     history = InMemoryHistory()
     try:
         while True:
@@ -71,12 +75,17 @@ def main(model_name):
                 continue
             for name, model in models.items():
                 print('--------------', name, '--------------')
-                pprint(model.most_similar(positive=text.split()))
+                try:
+                    pprint(model.most_similar(positive=text.split(), topn=topn))
+                except KeyError as e:
+                    print(e.args[0])
+                    continue
     except (EOFError, KeyboardInterrupt):
         print('\nExit.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show similar words/funs')
-    parser.add_argument('-m', '--model', default='word2vec', help='Please specify words')
-    arg = parser.parse_args()
-    main(arg.model)
+    parser.add_argument('-m', '--model', default='word2vec', help='specify which model to use')
+    parser.add_argument('-n', '--topn', default=10, help='specify the number of output')
+    args = parser.parse_args()
+    main(args)
