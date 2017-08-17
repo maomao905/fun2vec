@@ -32,7 +32,6 @@ def get_best_profile():
     logger.info('Running query...\n{}'.format(sql))
     res = session.query(User.description).from_statement(text(sql)).all()
     logger.info('Analyze {} profiles'.format(len(res)))
-    model = word2vec.load_model()
     user_funs = []
     for profile in res:
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
@@ -48,7 +47,7 @@ def extend_funs(user_funs):
     ユーザーの興味データを拡張し、辞書を作る
     """
     # Twitterプロフィール情報から作成したword2vecモデル
-    model = word2vec.load_model()
+    model = word2vec.load_model('word2vec')
     # 興味辞書
     fun2id = defaultdict(lambda: len(fun2id))
     for funs in user_funs:
@@ -62,7 +61,7 @@ def extend_funs(user_funs):
         for idx, comb in enumerate(combs):
             try:
                 # ３つの興味ベクトルを足して、それに近い興味も取得
-                near_funs = set(w[0] for w in model.most_similar(positive=list(comb)))
+                near_funs = set(w[0] for w in model.most_similar(positive=list(comb), topn=3))
                 # 辞書に登録
                 list(map(lambda f: fun2id[f], near_funs))
             except KeyError:
@@ -119,4 +118,5 @@ def create_corpus():
     logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), FILE_CORPUS))
 
 if __name__ == '__main__':
+    # create_dictionary()
     create_corpus()
