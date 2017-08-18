@@ -1,7 +1,7 @@
 from model import create_session, User
 from sqlalchemy.sql.expression import text
 from util import read_sql
-from wakati import extract_words
+from morph import extract_words
 import re
 from itertools import combinations
 from collections import defaultdict, Counter
@@ -12,6 +12,7 @@ import logging
 from pprint import pprint
 import pandas as pd
 import numpy as np
+from flask_script import Manager
 
 logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
@@ -21,7 +22,7 @@ FILE_SQL = 'sql/filter_interests.sql'
 FILE_DICTIONARY = 'data/dictionary.pkl'
 FILE_WAKATI = 'data/wakati.txt'
 FILE_CORPUS = 'data/corpus.pkl'
-FILE_TOTAL_FUNS = 'data/total_funs_v2.csv'
+FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10
 REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
 
@@ -106,27 +107,14 @@ def create_dictionary():
         pickle.dump(dictionary, f)
     logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), FILE_DICTIONARY))
 
-def create_corpus():
-    corpus = []
-    with open(FILE_DICTIONARY, 'rb') as f:
-        dictionary = pickle.load(f)
-
-    with open(FILE_WAKATI, 'r') as f:
-        wakati = f.readline()
-        while wakati:
-            wakati = f.readline()
-            corpus.append([word for word in set(wakati.strip().split(' ')) if word in dictionary])
-
-    with open(FILE_CORPUS, 'wb') as f:
-        pickle.dump(corpus, f)
-    logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), FILE_CORPUS))
-
+manager = Manager(usage='Perform corpus operations')
 def get_similar_words(model, positive, negative=[], cut_sim=0.8, topn=1):
     res = model.most_similar(positive=positive, negative=negative, topn=topn)
     sim_words = [w for w, sim in res if sim > cut_sim]
     return sim_words
 
-def get_best_corpus():
+@manager.command
+def create_best_corpus():
     """
     choose good words by self-check => extend those words by gensim most_similar
     まとめるとあなたは〇〇が好き
@@ -149,13 +137,12 @@ def get_best_corpus():
         # 2つ以上正解興味に存在していたら
         if len(best_funs) >= 2:
             # 正解興味に一番近いワードを取得
-            words = get_similar_words(model, positive=best_funs, topn=1)
+            words = get_similar_words(model, positive=best_funs, topn=2)
             # もし近い興味が類似度0.8以上で存在したら
             if len(words) > 0:
                 # 新たな興味と既存の興味を引き算したものを再度most_similar
-                words2 = get_similar_words(model, positive=best_funs, negative=words, topn=3)
-                df_new = pd.DataFrame(np.array(words+words2).reshape(1, -1).T, columns=['fun'])
-                print(best_funs, words+words2)
+                df_new = pd.DataFrame(np.array(words).reshape(1, -1).T, columns=['fun'])
+                print(best_funs, words)
                 df = df.append(df_new, ignore_index=True).drop_duplicates()
             # combs = list(combinations(list(words), 2))
             # random.shuffle(combs)
@@ -183,19 +170,30 @@ def get_middle_words(model, w1, w2):
     # w1 = matutils.unitvec(np.array([sim for w, sim in model.most_similar(w1, topn=10)]))
     # w2 = matutils.unitvec(np.array([sim for w, sim in model.most_similar(w2, topn=10)]))
     # weight1 = np.mean(matutils.unitvec(n)[sim**2 for w, sim in model.most_similar(w1, topn=10)])
-    weight2 = np.mean([sim**2 for w, sim in model.most_similar(w2, topn=10)])
-    weight1 = np.mean([sim**2 for w, sim in model.most_similar(w1, topn=10)])
+    # import pdb; pdb.set_trace()
+    # cosine distance
+    cos_dist1 = 1 - np.mean([sim for w, sim in model.most_similar(w1, topn=10)])
+    cos_dist2 = 1 - np.mean([sim for w, sim in model.most_similar(w2, topn=10)])
     print('------------------')
-    print(weight1, weight2)
+    print(cos_dist1, cos_dist2)
+    # indices = [model.wv.vocab['提案'].index for w in model.most_similar
+    # sim_words = [w for w, sim in model.most_similar(w1, topn=10)]
+    # sim_vec = np.array([model.wv.word_vec(word) for word in sim_words])
+    # dist1 = np.linalg.norm(model.wv.word_vec(w1)-sim_vec)
+
     # use norm (computationally efficient)
     w1_vec = model.wv.word_vec(w1, use_norm=True)
     w2_vec = model.wv.word_vec(w2, use_norm=True)
     # import pdb; pdb.set_trace()
-    middle = w1_vec - ((w1_vec - w2_vec) * (weight2 / (weight1 + weight2)))
+    # 重みづけした単語1ベクトル+単語2ベクトルの中間点
+    middle = w1_vec - ((w1_vec - w2_vec) * (cos_dist1 / (cos_dist1 + cos_dist2)))
     # unitvec -> scale a vector to unit length(euclid距離で割る=l2-norm)
     # np.array([w1_vec, w2_vec]).mean(axis=0)
-    mean = matutils.unitvec(np.array(middle)).astype(REAL) # 重みづけした単語1と単語2の平均vector
-    res = model.similar_by_vector(mean, topn=20)
+    # scale
+    middle = matutils.unitvec(np.array(middle)).astype(REAL)
+    res = model.similar_by_vector(middle, topn=20)
+    # w1とw2は除く
+    res = [(w, sim) for w, sim in res if w not in [w1, w2]]
     pprint(res)
 
 if __name__ == '__main__':
