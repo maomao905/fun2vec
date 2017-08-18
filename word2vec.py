@@ -48,9 +48,24 @@ def create_fun2vec():
             funs.append(reverse_dictionary[fun_id])
         sentences.append(funs)
     # defaultでcbowらしい
-    model = word2vec.Word2Vec(sentences, size=200, min_count=20, window=20)
+    model = word2vec.Word2Vec(sentences, size=200, min_count=30, window=20)
     model.save(FILE_FUN2VEC)
     logger.info('Saved model in {}'.format(FILE_FUN2VEC))
+
+@manager.option('-m', '--model', dest='model_name', default='fun2vec')
+@manager.option('-n', '--topn', dest='topn', default=300)
+@manager.option('-w', '--target_word', dest='target_word', default=None)
+def check_vocab(model_name, topn, target_word):
+    'Check model vocabrary in frequent order'
+    logging.getLogger().setLevel(logging.ERROR)
+    model = load_model(model_name)
+    if target_word:
+        print(model.wv.vocab[target_word].count, target_word)
+    else:
+        for idx, word in enumerate(model.wv.index2word):
+            print(model.wv.vocab[word].count, word)
+            if idx >= int(topn):
+                break
 
 def load_model(model_name):
     if model_name == 'word2vec':
@@ -61,6 +76,8 @@ def load_model(model_name):
 def main(args):
     model_name = args.model
     topn = int(args.topn)
+    restrict_vocab = int(args.restrict_vocab) if args.restrict_vocab else None
+
     logging.getLogger().setLevel(logging.ERROR)
     models = OrderedDict()
     if model_name in ['word2vec', 'all']:
@@ -76,7 +93,7 @@ def main(args):
             for name, model in models.items():
                 print('--------------', name, '--------------')
                 try:
-                    pprint(model.most_similar(positive=text.split(), topn=topn))
+                    pprint(model.most_similar(positive=text.split(), topn=topn, restrict_vocab=restrict_vocab))
                 except KeyError as e:
                     print(e.args[0])
                     continue
@@ -85,7 +102,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show similar words/funs')
-    parser.add_argument('-m', '--model', default='word2vec', help='specify which model to use')
+    parser.add_argument('-m', '--model', default='all', help='specify which model to use')
     parser.add_argument('-n', '--topn', default=10, help='specify the number of output')
+    parser.add_argument('-rv', '--restrict_vocab', default=None, help='specify how the number of word vectors you will check in the vocabulary order')
     args = parser.parse_args()
     main(args)
