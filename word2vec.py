@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 FILE_WORD2VEC = 'data/profile.model'
 FILE_FUN2VEC = 'data/fun.model'
 FILE_WAKATI = 'data/wakati.txt'
+FILE_CORPUS = 'data/corpus.pkl'
 
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
@@ -32,21 +33,9 @@ def create_word2vec():
 @manager.command
 def create_fun2vec():
     'Create fun2vec model'
-    FILE_CORPUS = 'data/corpus.pkl'
-    FILE_DICTIONARY = 'data/dictionary.pkl'
     with open(FILE_CORPUS, 'rb') as f:
-        corpus = pickle.load(f)
-    with open(FILE_DICTIONARY, 'rb') as f:
-        dictionary = pickle.load(f)
-        reverse_dictionary = {v: k for k, v in dictionary.items()}
-        del dictionary
+        sentences = pickle.load(f)
 
-    sentences = []
-    for fun_ids in corpus:
-        funs = []
-        for fun_id in fun_ids:
-            funs.append(reverse_dictionary[fun_id])
-        sentences.append(funs)
     # defaultでcbowらしい
     model = word2vec.Word2Vec(sentences, size=200, min_count=30, window=20)
     model.save(FILE_FUN2VEC)

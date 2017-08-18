@@ -111,7 +111,7 @@ def create_corpus():
         wakati = f.readline()
         while wakati:
             wakati = f.readline()
-            corpus.append([dictionary[fun] for fun in set(wakati.strip().split(' ')) if fun in dictionary])
+            corpus.append([word for word in set(wakati.strip().split(' ')) if word in dictionary])
 
     with open(FILE_CORPUS, 'wb') as f:
         pickle.dump(corpus, f)
