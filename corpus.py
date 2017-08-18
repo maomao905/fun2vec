@@ -183,8 +183,8 @@ def get_middle_words(model, w1, w2):
     # w1 = matutils.unitvec(np.array([sim for w, sim in model.most_similar(w1, topn=10)]))
     # w2 = matutils.unitvec(np.array([sim for w, sim in model.most_similar(w2, topn=10)]))
     # weight1 = np.mean(matutils.unitvec(n)[sim**2 for w, sim in model.most_similar(w1, topn=10)])
-    weight1 = np.sum([sim for w, sim in model.most_similar(w1, topn=10)])
-    weight2 = np.sum([sim for w, sim in model.most_similar(w2, topn=10)])
+    weight2 = np.mean([sim**2 for w, sim in model.most_similar(w2, topn=10)])
+    weight1 = np.mean([sim**2 for w, sim in model.most_similar(w1, topn=10)])
     print('------------------')
     print(weight1, weight2)
     # use norm (computationally efficient)
@@ -199,11 +199,26 @@ def get_middle_words(model, w1, w2):
     pprint(res)
 
 if __name__ == '__main__':
-    # create_dictionary()
-    # get_best_corpus()
-    import sys
+    # import sys
     from gensim import matutils
     from numpy import exp, log, dot, zeros, outer, random, dtype, float32 as REAL
+    from prompt_toolkit.history import InMemoryHistory
+    from prompt_toolkit import prompt
+    import argparse
+    parser = argparse.ArgumentParser(description='Show similar words/funs')
+    # parser.add_argument('-w', '--words', default=None, help='specify')
+    history = InMemoryHistory()
+    # args = parser.parse_args()
+    # words = args.words.split()
     model = word2vec.load_model('fun2vec')
-    args = sys.argv[1:]
-    get_middle_words(model, args[0], args[1])
+    try:
+        while True:
+            text = prompt('words> ', history=history)
+            if not text:
+                continue
+            words = text.split()
+            get_middle_words(model, words[0], words[1])
+    except (EOFError, KeyboardInterrupt):
+        print('\nExit.')
+    # create_dictionary()
+    # get_best_corpus()
