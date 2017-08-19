@@ -98,6 +98,28 @@ def _find_fun_part(text):
 
 manager = Manager(usage='Perform corpus operations')
 @manager.command
+def create_word2vec_corpus():
+    corpus = []
+    session = create_session()
+    logger.info('Fetching twitter profile data from DB...')
+    res = session.query(User.description).filter(User.verified==0).all() # 公式アカウントは除く
+    logger.info('Fetched {} twitter profiles'.format(len(res)))
+    logger.info('Extracting words from twitter profiles...')
+    STOP_WORDS = pd.read_csv(config['stop_words'], header=None).values.flatten().tolist()
+    for idx, profile in enumerate(res, 1):
+        profile = profile[0]
+        if profile is None:
+            continue
+        words = extract_words(profile, STOP_WORDS)
+        if len(words) >= 2:
+            corpus.append(words)
+        if idx % 10000 == 0:
+            logger.info('Finished {} records'.format(idx))
+    with open(config['word2vec']['corpus'], 'wb') as f:
+        pickle.dump(corpus, f)
+    logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
+
+@manager.command
 def create_fun2vec_dictionary():
     user_funs = _get_best_profile()
     logger.info('Extending funs to create dictionary...')
