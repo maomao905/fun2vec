@@ -1,7 +1,6 @@
 import os, sys
 import pickle
 from gensim.models import word2vec
-from wakati import create_wakati
 from flask_script import Manager
 import logging
 from pprint import pprint
@@ -9,37 +8,34 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit import prompt
 import argparse
 from collections import OrderedDict
+from util import load_config
 
 logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
 logger = logging.getLogger(__name__)
 
-FILE_WORD2VEC = 'data/profile.model'
-FILE_FUN2VEC = 'data/fun.model'
-FILE_WAKATI = 'data/wakati.txt'
-FILE_CORPUS = 'data/corpus.pkl'
+config = load_config()
 
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
 def create_word2vec():
-    'Extract words -> Create wakati sentences -> Create word2vec model'
-    create_wakati()
-    sentences = word2vec.Text8Corpus(FILE_WAKATI)
+    'Extract words -> Create corpus -> Create word2vec model'
+    with open(config['word2vec']['corpus'], 'rb') as f:
+        sentences = pickle.load(f)
     logger.info('Creating word2vec model...')
-    model = word2vec.Word2Vec(sentences, size=200, min_count=10, window=5)
-    model.save(FILE_WORD2VEC)
-    logger.info('Saved model in {}'.format(FILE_WORD2VEC))
+    model = word2vec.Word2Vec(sentences, size=500, min_count=30, window=5)
+    model.save(config['word2vec']['model'])
+    logger.info('Saved model in {}'.format(config['word2vec']['model']))
 
 @manager.command
 def create_fun2vec():
     'Create fun2vec model'
-    with open(FILE_CORPUS, 'rb') as f:
+    with open(config['fun2vec']['corpus'], 'rb') as f:
         sentences = pickle.load(f)
-
     # defaultでcbowらしい
     model = word2vec.Word2Vec(sentences, size=200, min_count=30, window=20)
-    model.save(FILE_FUN2VEC)
-    logger.info('Saved model in {}'.format(FILE_FUN2VEC))
+    model.save(config['fun2vec']['model'])
+    logger.info('Saved model in {}'.format(config['fun2vec']['model']))
 
 @manager.option('-m', '--model', dest='model_name', default='fun2vec')
 @manager.option('-n', '--topn', dest='topn', default=300)
@@ -57,10 +53,7 @@ def check_vocab(model_name, topn, target_word):
                 break
 
 def load_model(model_name):
-    if model_name == 'word2vec':
-        return word2vec.Word2Vec.load(FILE_WORD2VEC)
-    if model_name == 'fun2vec':
-        return word2vec.Word2Vec.load(FILE_FUN2VEC)
+    return word2vec.Word2Vec.load(config[model_name]['model'])
 
 def main(args):
     model_name = args.model

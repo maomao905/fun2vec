@@ -1,6 +1,6 @@
 from model import create_session, User
 from sqlalchemy.sql.expression import text
-from util import read_sql
+from util import read_sql, load_config
 from morph import extract_words
 import re
 from itertools import combinations
@@ -18,10 +18,8 @@ logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
 logger = logging.getLogger(__name__)
 
+config = load_config()
 FILE_SQL = 'sql/filter_interests.sql'
-FILE_DICTIONARY = 'data/dictionary.pkl'
-FILE_WAKATI = 'data/wakati.txt'
-FILE_CORPUS = 'data/corpus.pkl'
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10
 REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
@@ -41,8 +39,8 @@ def get_best_profile():
     for profile in res:
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
         funs = find_fun_part(profile[0])
-        # 興味が３つ以上の場合だけ
-        if len(funs) >= 3:
+        # 興味が２つ以上の場合だけ
+        if len(funs) >= 2:
             user_funs.append(funs)
 
     return user_funs
@@ -66,7 +64,7 @@ def extend_funs(user_funs):
         for idx, comb in enumerate(combs):
             try:
                 # ３つの興味ベクトルを足して、それに近い興味も取得
-                near_funs = set(w[0] for w in model.most_similar(positive=list(comb), topn=3))
+                near_funs = set(w for w, sim in model.most_similar(positive=list(comb), topn=3) if sim > 0.8)
                 # 辞書に登録
                 list(map(lambda f: fun2id[f], near_funs))
             except KeyError:
@@ -99,15 +97,22 @@ def find_fun_part(text):
 
     return set(fun_words)
 
+manager = Manager(usage='Perform corpus operations')
+@manager.command
 def create_dictionary():
     user_funs = get_best_profile()
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
-    with open(FILE_DICTIONARY, 'wb') as f:
+    with open(config['fun2vec']['dictionary'], 'wb') as f:
         pickle.dump(dictionary, f)
-    logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), FILE_DICTIONARY))
+    logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
 
-manager = Manager(usage='Perform corpus operations')
+def create_fun2vec_corpus():
+    with open(config['fun2vec']['dictionary'], 'rb') as f:
+        dictionary = pickle.load(f)
+
+    with open(file)
+
 def get_similar_words(model, positive, negative=[], cut_sim=0.8, topn=1):
     res = model.most_similar(positive=positive, negative=negative, topn=topn)
     sim_words = [w for w, sim in res if sim > cut_sim]
@@ -119,7 +124,7 @@ def create_best_corpus():
     choose good words by self-check => extend those words by gensim most_similar
     まとめるとあなたは〇〇が好き
     """
-    with open(FILE_CORPUS, 'rb') as f:
+    with open(config['fun2vec']['corpus2'], 'rb') as f:
         corpus = pickle.load(f)
 
     df = pd.read_csv('data/best_funs.csv', header=None, names=['fun'])

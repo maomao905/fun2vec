@@ -9,6 +9,11 @@ logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
 logger = logging.getLogger(__name__)
 
+def load_config():
+    with open('config.yml', 'r') as f:
+        config = yaml.load(f)
+        return config
+
 def read_sql(file_path):
     with open(file_path, 'r') as f:
         sql = f.read()
