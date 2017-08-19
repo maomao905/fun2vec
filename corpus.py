@@ -23,7 +23,7 @@ FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10
 REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
 
-def get_best_profile():
+def _get_best_profile():
     """
     下記のような区切りがあるを興味・関心とみなし取得する。
     ex) 最近は、三浦半島探検/ヒリゾ/伊豆/箱根/道志/長野上田/ドライブ/秘湯が好きです。
@@ -37,7 +37,7 @@ def get_best_profile():
     user_funs = []
     for profile in res:
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
-        funs = find_fun_part(profile[0])
+        funs = _find_fun_part(profile[0])
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
             user_funs.append(funs)
@@ -71,7 +71,7 @@ def extend_funs(user_funs):
                 continue
     return fun2id
 
-def find_fun_part(text):
+def _find_fun_part(text):
     """
     正規表現で「三浦半島探検/ヒリゾ/伊豆が好きです。」の部分だけを取得
     形態素解析で興味を抽出
@@ -99,7 +99,7 @@ def find_fun_part(text):
 manager = Manager(usage='Perform corpus operations')
 @manager.command
 def create_fun2vec_dictionary():
-    user_funs = get_best_profile()
+    user_funs = _get_best_profile()
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
     with open(config['fun2vec']['dictionary'], 'wb') as f:
@@ -131,20 +131,28 @@ def create_fun2vec_corpus():
     logger.info('Saved corpus of {} sentences in {}'.format(len(fun2vec_corpus), config['fun2vec']['corpus']))
 
 def get_similar_words(model, positive, negative=[], cut_sim=0.8, topn=1):
-    res = model.most_similar(positive=positive, negative=negative, topn=topn)
-    sim_words = [w for w, sim in res if sim > cut_sim]
-    return sim_words
+    try:
+        res = model.most_similar(positive=positive, negative=negative, topn=topn)
+    except KeyError:
+        return []
+    return [w for w, sim in res if sim > cut_sim]
+
+def _extend_vocab(model, words):
+    """
+    既存のvocabをmost_similarして重複しないものを新たに返す
+    """
+    comb_sim_words = set(get_similar_words(model, words, topn=5))
+    sim_words1 = set(get_similar_words(model, words[0], topn=10))
+    sim_words2 = set(get_similar_words(model, words[1], topn=10))
+    return comb_sim_words - sim_words1 - sim_words2
 
 @manager.command
-def create_best_corpus():
+def create_dictionary_from_samples():
     """
     choose good words by self-check => extend those words by gensim most_similar
     まとめるとあなたは〇〇が好き
     """
-    with open(config['fun2vec']['corpus2'], 'rb') as f:
-        corpus = pickle.load(f)
-
-    df = pd.read_csv('data/best_funs.csv', header=None, names=['fun'])
+    df = pd.read_csv('data/sample_funs.csv', header=None, names=['fun'])
     # import pdb; pdb.set_trace()
     model = load_model('fun2vec')
 
@@ -152,41 +160,24 @@ def create_best_corpus():
     # ['カメラ', '機械学習', 'お笑い', 'スケート'], ['アニメ', 'オタク', '東京大学', '公務員'],
     # ['阪神','PC','鉄道','数学','統計学','音楽','教育','アニメ','仏教','台湾','語学学習'], ['無機化学','有機化学','生化学','薬理学','免疫学','統計学','物理数学'],
     # ['読書','生物学','統計学','ソフトテニス','ソフトボール'], ['猫','犬','柴犬','ディズニー','ミスチル','サッカー','フットサル']]
-    logger.info('Adding new funs from labeled funs...')
-    for idx, words in enumerate(corpus):
-        # そのプロフィールに存在する正解興味
-        best_funs = df[df.fun.isin(words)].values.flatten().tolist()
-        # 2つ以上正解興味に存在していたら
-        if len(best_funs) >= 2:
-            # 正解興味に一番近いワードを取得
-            words = get_similar_words(model, positive=best_funs, topn=2)
-            # もし近い興味が類似度0.8以上で存在したら
-            if len(words) > 0:
-                # 新たな興味と既存の興味を引き算したものを再度most_similar
-                df_new = pd.DataFrame(np.array(words).reshape(1, -1).T, columns=['fun'])
-                print(best_funs, words)
+    logger.info('Extending vocabulary from sample dictionary...')
+    # サンプルから２つ取得
+    while True:
+        sample_vocabs = df.sample(2).values.flatten().tolist()
+        new_vocabs = _extend_vocab(model, sample_vocabs)
+        if len(new_vocabs) > 0:
+            new_vocabs = list(new_vocabs - set(df[df.fun.isin(new_vocabs)].values.flatten()))
+            if len(new_vocabs) > 0:
+                df_new = pd.DataFrame(np.array(new_vocabs).reshape(1, -1).T, columns=['fun'])
                 df = df.append(df_new, ignore_index=True).drop_duplicates()
-            # combs = list(combinations(list(words), 2))
-            # random.shuffle(combs)
-            # 組み合わせの数が多すぎるので、興味の数だけ拡張を行う
-            # combs = combs[:len(words)]
-            # sim_words = []
-            # comb_count = 0
-            # for comb in combs:
-            #     try:
-            #         # cos類似度0.8以上の単語を追加
-            #         sim_words.extend([w for w, sim in model.most_similar(comb, topn=3)])
-            #         comb_count += 1
-            #     except KeyError:
-            #         continue
-            # counter = Counter(sim_words)
-            # print('comb_count', comb_count)
-            # print('sim_words', counter)
-        if (idx + 1) % 10000 == 0:
-            break
-            logger.info('Finished {} sentences'.format(idx+1))
-    df.to_csv(FILE_TOTAL_FUNS, index=False, header=False)
-    logger.info('Done! Saved total funs in {}'.format(FILE_TOTAL_FUNS))
+                if len(df) % 1000 == 0:
+                    logger.info('Total {} vocabs'.format(len(df)))
+                # 辞書2000語になったら終了した
+                if len(df) >= 2000:
+                    break
+
+    # df.to_csv(FILE_TOTAL_FUNS, index=False, header=False)
+    logger.info('Done! Saved {} vocabs in {}'.format(len(df), FILE_TOTAL_FUNS))
 
 def get_middle_words(model, w1, w2):
     # w1 = matutils.unitvec(np.array([sim for w, sim in model.most_similar(w1, topn=10)]))
