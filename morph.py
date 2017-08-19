@@ -16,7 +16,7 @@ def extract_words(sentence, stop_words=[]):
     """
     日本語で名詞 or 形容詞を取得
     """
-    tagger = MeCab.Tagger('mecabrc -d /usr/local/lib/mecab/dic/ipadic')
+    tagger = MeCab.Tagger()
     tagger.parse('')
     node = tagger.parseToNode(sentence)
     words = []
@@ -57,8 +57,7 @@ def check_en(text):
     return bool(REGEX_EN.search(text))
 
 def filter_feature(features):
-    # 固有名詞も省いてみる
-    if features[0] == '名詞' and features[1] in ['一般', 'サ変接続']:
+    if features[0] == '名詞' and features[1] in ['一般', 'サ変接続', '固有名詞']:
         return True
     else:
         return False
