@@ -14,11 +14,10 @@ import pandas as pd
 import numpy as np
 from flask_script import Manager
 
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
+logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
-config = load_config()
+config = load_config('file')
 FILE_SQL = 'sql/filter_interests.sql'
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10

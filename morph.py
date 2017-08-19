@@ -1,9 +1,9 @@
 import MeCab
 import re
 import logging
+from util import load_config
 
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
+logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
 REGEX_JA = re.compile(r'[ぁ-んァ-ン一-龥]')
@@ -11,6 +11,7 @@ REGEX_HIRA = re.compile(r'^[ぁ-ん]{2}$')
 REGEX_EN = re.compile(r'[a-zA-Z]+')
 
 UNKNOWN_MARK = '*'
+
 def extract_words(sentence, stop_words=[]):
     """
     日本語で名詞 or 形容詞を取得

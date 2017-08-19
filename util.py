@@ -5,12 +5,11 @@ from ansible.parsing.vault import VaultLib
 import logging
 from flask_script import Manager
 
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
+logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
-def load_config():
-    with open('config.yml', 'r') as f:
+def load_config(name):
+    with open(os.path.join('config', name + '_config.yml'), 'r') as f:
         config = yaml.load(f)
         return config
 
@@ -42,7 +41,7 @@ manager = Manager(usage='Perform util commands')
 @manager.command
 def encrypt():
     'Encrypt secrets.yml'
-    file_path = 'secrets.yml'
+    file_path = os.path.join('config', 'secrets.yml')
     with open(file_path, 'r') as f:
         data = yaml.load(f)
     if vault.is_encrypted(data):
@@ -55,7 +54,7 @@ def encrypt():
 @manager.command
 def decrypt_dump():
     'Decrypt and Dump secrets.yml'
-    file_path = 'secrets.yml'
+    file_path = os.path.join('config', 'secrets.yml')
     data = decrypt()
     with open(file_path, 'w') as f:
         f.write(yaml.dump(data, default_flow_style=False))

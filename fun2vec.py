@@ -10,11 +10,10 @@ import argparse
 from collections import OrderedDict
 from util import load_config
 
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(format='[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s')
+logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
-config = load_config()
+config = load_config('file')
 
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command

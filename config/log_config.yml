@@ -1,0 +1,17 @@
+version: 1
+formatters:
+  consoleFormatter:
+    format: '[%(asctime)s][%(levelname)-5s][%(name)-10s][%(funcName)-10s] %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+
+handlers:
+  appHandler:
+    class: logging.StreamHandler
+    formatter: consoleFormatter
+    level: INFO
+
+root:
+  level: INFO
+  handlers: [appHandler]
+
+disable_existing_loggers: no
