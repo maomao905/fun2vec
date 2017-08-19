@@ -3,15 +3,16 @@ import json, yaml
 from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib
 import logging
+import logging.config
 from flask_script import Manager
-
-logging.config.dictConfig(load_config('log'))
-logger = logging.getLogger(__name__)
 
 def load_config(name):
     with open(os.path.join('config', name + '_config.yml'), 'r') as f:
         config = yaml.load(f)
         return config
+
+logging.config.dictConfig(load_config('log'))
+logger = logging.getLogger(__name__)
 
 def read_sql(file_path):
     with open(file_path, 'r') as f:
@@ -25,7 +26,7 @@ def decrypt():
     """
     Decrypt secrets.yml
     """
-    file_path = 'secrets.yml'
+    file_path = os.path.join('config', 'secrets.yml')
     with open(file_path, 'rb') as f:
         data = f.read()
     vault_lib = VaultLib(os.environ['FUN2VEC_SECRET_PASSWORD'])
