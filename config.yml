@@ -1,5 +1,5 @@
 word2vec:
-    corpus: data/words2vec_corpus.pkl
+    corpus: data/word2vec_corpus.pkl
     model: data/word2vec.model
 fun2vec:
     corpus: data/fun2vec_corpus.pkl

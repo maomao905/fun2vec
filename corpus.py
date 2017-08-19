@@ -99,7 +99,7 @@ def find_fun_part(text):
 
 manager = Manager(usage='Perform corpus operations')
 @manager.command
-def create_dictionary():
+def create_fun2vec_dictionary():
     user_funs = get_best_profile()
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
@@ -107,11 +107,29 @@ def create_dictionary():
         pickle.dump(dictionary, f)
     logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
 
+@manager.command
 def create_fun2vec_corpus():
+    'use dictionary of extracted funs to create fun corpus from word corpus'
     with open(config['fun2vec']['dictionary'], 'rb') as f:
         dictionary = pickle.load(f)
+        dictionary_words = list(dictionary.keys())
 
-    with open(file)
+    with open(config['word2vec']['corpus'], 'rb') as f:
+        word2vec_corpus = pickle.load(f)
+
+    logger.info('Creating fun2vec corpus...')
+    fun2vec_corpus = []
+    for idx, words in enumerate(word2vec_corpus, 1):
+        funs = [word for word in words if word in dictionary_words]
+        # 興味が２つ以上の場合のみ
+        if len(funs) >= 2:
+            fun2vec_corpus.append(funs)
+        if idx % 10000 == 0:
+            logger.info('Finished {} sentences'.format(idx))
+
+    with open(config['fun2vec']['corpus'], 'wb') as f:
+        pickle.dump(fun2vec_corpus, f)
+    logger.info('Saved corpus of {} sentences in {}'.format(len(fun2vec_corpus), config['fun2vec']['corpus']))
 
 def get_similar_words(model, positive, negative=[], cut_sim=0.8, topn=1):
     res = model.most_similar(positive=positive, negative=negative, topn=topn)
