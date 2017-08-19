@@ -1,5 +1,5 @@
 from sklearn.cluster import MiniBatchKMeans
-from word2vec import load_model
+from fun2vec import load_model
 from sklearn.externals import joblib
 import numpy as np
 

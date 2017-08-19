@@ -5,7 +5,7 @@ from morph import extract_words
 import re
 from itertools import combinations
 from collections import defaultdict, Counter
-import word2vec
+from fun2vec import load_model
 import random
 import pickle
 import logging
@@ -50,7 +50,7 @@ def extend_funs(user_funs):
     ユーザーの興味データを拡張し、辞書を作る
     """
     # Twitterプロフィール情報から作成したword2vecモデル
-    model = word2vec.load_model('word2vec')
+    model = load_model('word2vec')
     # 興味辞書
     fun2id = defaultdict(lambda: len(fun2id))
     for funs in user_funs:
@@ -129,7 +129,7 @@ def create_best_corpus():
 
     df = pd.read_csv('data/best_funs.csv', header=None, names=['fun'])
     # import pdb; pdb.set_trace()
-    model = word2vec.load_model('fun2vec')
+    model = load_model('fun2vec')
 
     # corpus = [['議論', '英語', 'ビリヤード', 'サッカー', 'プログラミング', 'エンジニア', '機械学習', '耳かき', 'コミュ障', '幼い', 'ドライブ'],
     # ['カメラ', '機械学習', 'お笑い', 'スケート'], ['アニメ', 'オタク', '東京大学', '公務員'],
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     history = InMemoryHistory()
     # args = parser.parse_args()
     # words = args.words.split()
-    model = word2vec.load_model('fun2vec')
+    model = load_model('fun2vec')
     try:
         while True:
             text = prompt('words> ', history=history)
