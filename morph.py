@@ -2,6 +2,7 @@ import MeCab
 import re
 import logging
 from util import load_config
+import pandas as pd
 
 logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
@@ -12,7 +13,10 @@ REGEX_EN = re.compile(r'[a-zA-Z]+')
 
 UNKNOWN_MARK = '*'
 
-def extract_words(sentence, stop_words=[]):
+config = load_config('file')
+STOP_WORDS = pd.read_csv(config['stop_words'], header=None).values.flatten().tolist()
+
+def extract_words(sentence):
     """
     日本語で名詞 or 形容詞を取得
     """
@@ -31,7 +35,7 @@ def extract_words(sentence, stop_words=[]):
                     # genkei[7]が存在しない場合
                     genkei = features[6]
 
-                if valid_genkei(genkei, stop_words):
+                if valid_genkei(genkei, STOP_WORDS):
                     words.append(genkei)
         node = node.next
     return words
