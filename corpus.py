@@ -109,9 +109,10 @@ def create_fun2vec_dictionary():
 @manager.command
 def create_fun2vec_corpus():
     'use dictionary of extracted funs to create fun corpus from word corpus'
-    with open(config['fun2vec']['dictionary'], 'rb') as f:
-        dictionary = pickle.load(f)
-        dictionary_words = list(dictionary.keys())
+    # with open(config['fun2vec']['dictionary'], 'rb') as f:
+    #     dictionary = pickle.load(f)
+    #     dictionary_words = list(dictionary.keys())
+    dictionary_words = pd.read_csv('data/total_funs_v3.csv', header=None).values.flatten().tolist()
 
     with open(config['word2vec']['corpus'], 'rb') as f:
         word2vec_corpus = pickle.load(f)
@@ -185,9 +186,12 @@ def get_middle_words(model, w1, w2):
     # weight1 = np.mean(matutils.unitvec(n)[sim**2 for w, sim in model.most_similar(w1, topn=10)])
     # import pdb; pdb.set_trace()
     # cosine distance
-    cos_dist1 = 1 - np.mean([sim for w, sim in model.most_similar(w1, topn=10)])
-    cos_dist2 = 1 - np.mean([sim for w, sim in model.most_similar(w2, topn=10)])
-    print('------------------')
+    try:
+        cos_dist1 = 1 - np.mean([sim for w, sim in model.most_similar(w1, topn=10)])
+        cos_dist2 = 1 - np.mean([sim for w, sim in model.most_similar(w2, topn=10)])
+    except KeyError as e:
+        print(e.args[0])
+        return
     print(cos_dist1, cos_dist2)
     # indices = [model.wv.vocab['提案'].index for w in model.most_similar
     # sim_words = [w for w, sim in model.most_similar(w1, topn=10)]
@@ -210,17 +214,14 @@ def get_middle_words(model, w1, w2):
     pprint(res)
 
 if __name__ == '__main__':
-    # import sys
+    logging.getLogger().setLevel(logging.ERROR)
     from gensim import matutils
     from numpy import exp, log, dot, zeros, outer, random, dtype, float32 as REAL
     from prompt_toolkit.history import InMemoryHistory
     from prompt_toolkit import prompt
     import argparse
     parser = argparse.ArgumentParser(description='Show similar words/funs')
-    # parser.add_argument('-w', '--words', default=None, help='specify')
     history = InMemoryHistory()
-    # args = parser.parse_args()
-    # words = args.words.split()
     model = load_model('fun2vec')
     try:
         while True:
@@ -228,8 +229,9 @@ if __name__ == '__main__':
             if not text:
                 continue
             words = text.split()
+            if len(words) != 2:
+                print('Please specify two words')
+                continue
             get_middle_words(model, words[0], words[1])
     except (EOFError, KeyboardInterrupt):
         print('\nExit.')
-    # create_dictionary()
-    # get_best_corpus()

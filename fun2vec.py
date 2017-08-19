@@ -58,8 +58,6 @@ def main(args):
     model_name = args.model
     topn = int(args.topn)
     restrict_vocab = int(args.restrict_vocab) if args.restrict_vocab else None
-
-    logging.getLogger().setLevel(logging.ERROR)
     models = OrderedDict()
     if model_name in ['word2vec', 'all']:
         models['word2vec'] = load_model('word2vec')
@@ -82,6 +80,7 @@ def main(args):
         print('\nExit.')
 
 if __name__ == '__main__':
+    logging.getLogger().setLevel(logging.ERROR)
     parser = argparse.ArgumentParser(description='Show similar words/funs')
     parser.add_argument('-m', '--model', default='all', help='specify which model to use')
     parser.add_argument('-n', '--topn', default=10, help='specify the number of output')
