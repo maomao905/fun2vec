@@ -34,12 +34,9 @@ def _get_best_profile():
     return: [['三浦半島探検','ヒリゾ', '伊豆'], ['音楽', '落語', '旅']]
     """
     session = create_session()
-    sql = read_sql(FILE_SQL)
-    logger.info('Running query...\n{}'.format(sql))
-    res = session.query(User.description).from_statement(text(sql)).all()
-    logger.info('Analyze {} profiles'.format(len(res)))
+    logger.info('Running query...')
     user_funs = []
-    for idx, _user in enumerate(res, 1):
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
         funs = _find_fun_part(_user.description)
         # 興味が２つ以上の場合だけ
@@ -179,9 +176,9 @@ def create_simple_fun2vec_corpus():
     # most_similarでextendせずにcorpusを作る
     user_funs = _get_best_profile()
 
-    # with open(config['fun2vec']['corpus'], 'wb') as f:
-    #     pickle.dump(user_funs, f)
-    # logger.info('Saved corpus of {} profiles in {}'.format(len(user_funs), config['fun2vec']['corpus']))
+    with open(config['fun2vec']['corpus'], 'wb') as f:
+        pickle.dump(user_funs, f)
+    logger.info('Saved corpus of {} profiles in {}'.format(len(user_funs), config['fun2vec']['corpus']))
 
 @manager.command
 def create_fun2vec_corpus():
