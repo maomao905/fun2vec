@@ -169,9 +169,19 @@ def create_fun2vec_dictionary():
     user_funs = _get_best_profile()
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
+
     with open(config['fun2vec']['dictionary'], 'wb') as f:
         pickle.dump(dictionary, f)
     logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
+
+@manager.command
+def create_simple_fun2vec_corpus():
+    # most_similarでextendせずにcorpusを作る
+    user_funs = _get_best_profile()
+
+    # with open(config['fun2vec']['corpus'], 'wb') as f:
+    #     pickle.dump(user_funs, f)
+    # logger.info('Saved corpus of {} profiles in {}'.format(len(user_funs), config['fun2vec']['corpus']))
 
 @manager.command
 def create_fun2vec_corpus():
