@@ -22,6 +22,7 @@ FILE_SQL = 'sql/filter_interests.sql'
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10
 REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
+REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
 
 def _get_best_profile():
     """
@@ -70,6 +71,16 @@ def extend_funs(user_funs):
                 # 対象の興味が存在しなかった場合はスキップ
                 continue
     return fun2id
+
+def _replace_url(text):
+    """
+    urlを<URL>に置き換え
+    """
+    urls = REGEX_URL.findall(text)
+    for url in urls:
+        text = text.replace(url, '<URL>')
+
+    return text
 
 def _find_fun_part(text):
     """

@@ -1,5 +1,5 @@
 import unittest
-from corpus import find_fun_part
+from corpus import _find_fun_part, _replace_url, _invalid_profile
 
 SAMPLE_TEXT1 = '脳内掃除として独り言をつぶやいてる会社員です。  好きなこと：酒、風呂、寝る。最近はブクマとして使ってるような･･･。ここでの発言は私個人の意見であり、所属する組織を代表するものではありません。'
 SAMPLE_TEXT2 = 'Lv3娘との日常生活/洋裁/ゲーム Steam&PS4/FX&株…極稀に雑談配信やゲーム配信やってます。最近はPS4版Divisionをプレイしています。'
@@ -17,3 +17,20 @@ class TestCorpus(unittest.TestCase):
         self.assertEqual(find_fun_part(SAMPLE_TEXT3), ['あと', '絶望'])
         self.assertEqual(find_fun_part(SAMPLE_TEXT4), ['ビール', '箱根駅伝', '体操競技', '自転車', 'ジム', 'イカ'])
         # self.assertEqual(find_fun_part(SAMPLE_TEXT5), ['ビール', '箱根駅伝', '体操競技', '自転車', 'ジム', 'イカ'])
+
+    def test_relace_url(self):
+        """
+        urlを<URL>に置き換えする正規表現テスト
+        """
+        self.assertEqual(_replace_url('アニメ録画が趣味。最近DJはじめました。DJ記録→ https://mixcloud.com/sorshi/'), 'アニメ録画が趣味。最近DJはじめました。DJ記録→ <URL>')
+        # ftp
+        self.assertEqual(_replace_url('アニメ録画が趣味。最近DJはじめました。DJ記録→ ftp://mixcloud.com/sorshi/'), 'アニメ録画が趣味。最近DJはじめました。DJ記録→ <URL>')
+        # 複数
+        self.assertEqual(_replace_url('ガールズモード→ https://t.co/e0BHzR194g ミラクルニキ→ https://t.co/EjgsSnMpzc'), 'ガールズモード→ <URL> ミラクルニキ→ <URL>')
+        # 記号()
+        self.assertEqual(_replace_url('「Peak to Peak」についてはサークルサイト(http://ptp.cru-jp.com)をご覧下さい'), '「Peak to Peak」についてはサークルサイト(<URL>をご覧下さい')
+        # 記号
+        self.assertEqual(_replace_url('「Peak to Peak」についてはサークルサイト(http://mixi.jp/show_friend.pl?id=6)をご覧下さい'), '「Peak to Peak」についてはサークルサイト(<URL>をご覧下さい')
+        # 記号全部
+        self.assertEqual(_replace_url("マストドン https://mstdn.jp/<()'\"*hanayuu*-_;#!?*=@>"), 'マストドン <URL>')
+
