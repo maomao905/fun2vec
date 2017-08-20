@@ -135,12 +135,11 @@ def create_word2vec_corpus():
     res = session.query(User.description).filter(User.verified==0).all() # 公式アカウントは除く
     logger.info('Fetched {} twitter profiles'.format(len(res)))
     logger.info('Extracting words from twitter profiles...')
-    STOP_WORDS = pd.read_csv(config['stop_words'], header=None).values.flatten().tolist()
     for idx, profile in enumerate(res, 1):
         profile = profile[0]
         if profile is None:
             continue
-        words = extract_words(profile, STOP_WORDS)
+        words = extract_words(profile)
         if len(words) >= 2:
             corpus.append(words)
         if idx % 10000 == 0:

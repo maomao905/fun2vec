@@ -46,7 +46,7 @@ def valid_genkei(genkei, stop_words):
     １文字だけ、ひらがな２文字は省く
     """
     return (not bool(REGEX_HIRA.match(genkei)) and genkei != UNKNOWN_MARK \
-        and len(genkei) > 1 and genkei not in stop_words)
+        and genkei not in stop_words)
 
 def check_ja(text):
     """
