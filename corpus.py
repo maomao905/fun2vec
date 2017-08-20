@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 config = load_config('file')
 FILE_SQL = 'sql/filter_interests.sql'
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
-MAX_WORD_LENGTH = 10
-REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
+MAX_WORD_LENGTH = 12
+REGEX_CHAR = '[a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % MAX_WORD_LENGTH
+REGEX_FUNS = re.compile(r'({char}(?P<sep>とか|やら|、|,\s?|，|\s?/\s?|#|・|\s?／\s?|//|\|)(?:{char}(?P=sep))+{char})' \
+    .format(char=REGEX_CHAR), re.IGNORECASE)
 REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
 REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
 
@@ -37,12 +39,15 @@ def _get_best_profile():
     res = session.query(User.description).from_statement(text(sql)).all()
     logger.info('Analyze {} profiles'.format(len(res)))
     user_funs = []
-    for profile in res:
+    for idx, _user in enumerate(res, 1):
         # funs: ['三浦半島探検','ヒリゾ','伊豆']
-        funs = _find_fun_part(profile[0])
+        funs = _find_fun_part(_user.description)
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
             user_funs.append(funs)
+
+        if idx % 10000 == 0:
+            logger.info('Finished {} profiles'.format(idx))
 
     return user_funs
 
@@ -96,35 +101,46 @@ def _find_fun_part(text):
     if _invalid_profile(text):
         return []
 
+    # url置き換え
+    text = _replace_url(text)
+
     ma = REGEX_FUNS.search(text)
     if ma is None:
         return []
 
     # funs: ['三浦半島探検', 'ヒリゾ', '伊豆が好きです。']
-    funs = text[ma.start():].split(ma.group('sep'))
+    funs = ma.group().split(ma.group('sep'))
 
-    for idx, fun in enumerate(funs, 1):
+    for idx, fun in enumerate(funs):
         words = extract_words(fun)
-        # 配列の最後のみ区切りがわからず全部解析するので「伊豆が好きです。」=> 伊豆, 好き => 伊豆のみ抽出
-        # 英語の場合があるのでbyteでカウント
-        if idx == len(funs) or len(fun.encode('utf-8')) > MAX_WORD_LENGTH * 3:
-            if len(words) > 0:
+        if len(words) > 0:
+            if idx == 0:
+                # 区切られた最初の文はどこから最初かわからないので、一番最後だけ取得
+                first_word = words[-1]
+                fun_words.extend([first_word])
+            elif idx+1 == len(funs):
+                # 区切られた最後の文はどこまでかわからないので、一番先頭だけ取得
+                # 「伊豆が好きです。」=> 伊豆, 好き => 伊豆のみ抽出
                 last_word = words[0]
                 fun_words.extend([last_word])
-                # 残りのtext
                 try:
-                    next_start_idx = text.index(last_word) + len(last_word)
+                    # 残りのtext
+                    next_start_idx = text.index(fun) + fun.index(last_word) + len(last_word)
                     next_text = text[next_start_idx:]
-                    # 残りの文を再起的に見る
-                    fun_words.extend(_find_fun_part(next_text))
                 except ValueError:
-                    # last_wordが原型と異なる場合は諦める
-                    pass
-            break
+                    # last_wordが原型と異なる場合
+                    next_text = text[ma.end():]
+                # 残りの文を再起的に見る
+                fun_words.extend(_find_fun_part(next_text))
+            else:
+                fun_words.extend(words)
         else:
-            fun_words.extend(words)
+            # 区切られた最後の文で何も取得できなかったとき
+            if idx+1 == len(funs):
+                next_text = text[ma.end():]
+                fun_words.extend(_find_fun_part(next_text))
 
-    return set(fun_words)
+    return list(set(fun_words))
 
 manager = Manager(usage='Perform corpus operations')
 @manager.command
