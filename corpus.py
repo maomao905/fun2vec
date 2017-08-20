@@ -97,18 +97,29 @@ def _find_fun_part(text):
         return []
 
     ma = REGEX_FUNS.search(text)
-    try:
-        # funs: ['三浦半島探検', 'ヒリゾ', '伊豆が好きです。']
-        funs = text[ma.start():].split(ma.group('sep'))
-    except AttributeError:
-        return fun_words
-    for idx, fun in enumerate(funs):
+    if ma is None:
+        return []
+
+    # funs: ['三浦半島探検', 'ヒリゾ', '伊豆が好きです。']
+    funs = text[ma.start():].split(ma.group('sep'))
+
+    for idx, fun in enumerate(funs, 1):
         words = extract_words(fun)
         # 配列の最後のみ区切りがわからず全部解析するので「伊豆が好きです。」=> 伊豆, 好き => 伊豆のみ抽出
         # 英語の場合があるのでbyteでカウント
-        if idx + 1 == len(funs) or len(fun.encode('utf-8')) > MAX_WORD_LENGTH * 3:
-            if words:
-                fun_words.extend([words[0]])
+        if idx == len(funs) or len(fun.encode('utf-8')) > MAX_WORD_LENGTH * 3:
+            if len(words) > 0:
+                last_word = words[0]
+                fun_words.extend([last_word])
+                # 残りのtext
+                try:
+                    next_start_idx = text.index(last_word) + len(last_word)
+                    next_text = text[next_start_idx:]
+                    # 残りの文を再起的に見る
+                    fun_words.extend(_find_fun_part(next_text))
+                except ValueError:
+                    # last_wordが原型と異なる場合は諦める
+                    pass
             break
         else:
             fun_words.extend(words)
