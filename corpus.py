@@ -23,6 +23,7 @@ FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 10
 REGEX_FUNS = re.compile(r'([ぁ-んァ-ヶー一-龠]{1,%d}(?P<sep>、|,|/|\s|#|・)){2}' % MAX_WORD_LENGTH)
 REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
+REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
 
 def _get_best_profile():
     """
@@ -82,12 +83,19 @@ def _replace_url(text):
 
     return text
 
+def _invalid_profile(text):
+    return bool(REGEX_INVALID.search(text))
+
 def _find_fun_part(text):
     """
     正規表現で「三浦半島探検/ヒリゾ/伊豆が好きです。」の部分だけを取得
     形態素解析で興味を抽出
     """
     fun_words = []
+    # 公式アカウント・Botなどは除外
+    if _invalid_profile(text):
+        return []
+
     ma = REGEX_FUNS.search(text)
     try:
         # funs: ['三浦半島探検', 'ヒリゾ', '伊豆が好きです。']

@@ -34,3 +34,11 @@ class TestCorpus(unittest.TestCase):
         # 記号全部
         self.assertEqual(_replace_url("マストドン https://mstdn.jp/<()'\"*hanayuu*-_;#!?*=@>"), 'マストドン <URL>')
 
+    def test_invalid_profile(self):
+        """
+        公式アカウントなど除外する正規表現テスト
+        """
+        self.assertTrue(_invalid_profile('毎日新聞東京本社生活報道部が運営する公式ニュースアカウント'))
+        self.assertTrue(_invalid_profile('女性向け自動botです（たまに手動）'))
+        self.assertTrue(_invalid_profile('女性向け自動BOTです（たまに手動）'))
+        self.assertTrue(_invalid_profile('目的は協賛企業などの宣伝を主な理由としています'))
