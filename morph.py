@@ -28,12 +28,8 @@ def extract_words(sentence):
         if node.surface != '':
             # 品詞
             features = node.feature.split(',')
-            if filter_feature(features) and check_ja(node.surface):
-                try:
-                    genkei = features[7] if check_en(features[6]) else features[6]
-                except IndexError:
-                    # genkei[7]が存在しない場合
-                    genkei = features[6]
+            if filter_feature(features):
+                genkei = features[6]
 
                 if valid_genkei(genkei, STOP_WORDS):
                     words.append(genkei)
