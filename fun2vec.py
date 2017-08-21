@@ -69,10 +69,10 @@ def main(args):
                 try:
                     print('--------------', name, '--------------')
                     for word, sim in model.most_similar(positive=text.split(), topn=topn, restrict_vocab=restrict_vocab):
+                        word = ljust_ja(word, 20)
                         sim = round(sim, 3)
-
-                        print(highlight(pformat((word, sim)), lexer=Python3Lexer(), \
-                            formatter=Terminal256Formatter(style=get_color_style(sim))), end='')
+                        print(highlight('{word} {sim:.3f}'.format(word=word, sim=sim), \
+                            lexer=CustomLexer(), formatter=Terminal256Formatter(style=get_color_style(sim))), end='')
                         highlight.__init__()
                 except KeyError as e:
                     print(e.args[0])
@@ -91,20 +91,39 @@ if __name__ == '__main__':
     from prompt_toolkit.history import FileHistory
     from prompt_toolkit import prompt
     from pygments import highlight
-    from pygments.lexers import Python3Lexer
+    from pygments.lexer import RegexLexer
     from pygments.formatters import Terminal256Formatter
     from pygments.style import Style
-    from pygments.token import Token
-    from pprint import pformat
+    from pygments.token import Token, String, Number
+    import re
 
     history = FileHistory('./.model_test_history')
 
+    def ljust_ja(text, length):
+        text_length = 0
+        for char in text:
+            if ord(char) <= 255:
+                text_length += 1
+            else:
+                text_length += 2
+
+        return text + (length - text_length) * ' '
+
+    class CustomLexer(RegexLexer):
+        flags = re.IGNORECASE
+        tokens = {
+            'root': [
+                (r'^[^\W]+',    String),
+                (r'0\.[0-9]+$', Number)
+            ]
+        }
+
     def get_color_style(sim):
         SIM_COLORS = {
-            'low':          '#008080',
-            'normal':       '#5f9ea0',
-            'high':         '#87ceeb',
-            'extreme_high': '#afeeee'
+            'low':          '#b22222',
+            'normal':       '#00bfff',
+            'high':         '#ansiteal',
+            'extreme_high': '#ansiturquoise'
         }
         sim_color = None
         if sim >= 0.9:
