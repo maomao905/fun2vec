@@ -4,9 +4,6 @@ from gensim.models import word2vec
 from flask_script import Manager
 import logging
 from pprint import pprint
-from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit import prompt
-import argparse
 from collections import OrderedDict
 from util import load_config
 
@@ -63,16 +60,20 @@ def main(args):
         models['word2vec'] = load_model('word2vec')
     if model_name in ['fun2vec', 'all']:
         models['fun2vec'] = load_model('fun2vec')
-    history = InMemoryHistory()
     try:
         while True:
             text = prompt('words> ', history=history)
             if not text:
                 continue
             for name, model in models.items():
-                print('--------------', name, '--------------')
                 try:
-                    pprint(model.most_similar(positive=text.split(), topn=topn, restrict_vocab=restrict_vocab))
+                    print('--------------', name, '--------------')
+                    for word, sim in model.most_similar(positive=text.split(), topn=topn, restrict_vocab=restrict_vocab):
+                        sim = round(sim, 3)
+
+                        print(highlight(pformat((word, sim)), lexer=Python3Lexer(), \
+                            formatter=Terminal256Formatter(style=get_color_style(sim))), end='')
+                        highlight.__init__()
                 except KeyError as e:
                     print(e.args[0])
                     continue
@@ -80,10 +81,47 @@ def main(args):
         print('\nExit.')
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.ERROR)
+    import argparse
     parser = argparse.ArgumentParser(description='Show similar words/funs')
     parser.add_argument('-m', '--model', default='all', help='specify which model to use')
     parser.add_argument('-n', '--topn', default=10, help='specify the number of output')
     parser.add_argument('-rv', '--restrict_vocab', default=None, help='specify how the number of word vectors you will check in the vocabulary order')
     args = parser.parse_args()
+
+    from prompt_toolkit.history import FileHistory
+    from prompt_toolkit import prompt
+    from pygments import highlight
+    from pygments.lexers import Python3Lexer
+    from pygments.formatters import Terminal256Formatter
+    from pygments.style import Style
+    from pygments.token import Token
+    from pprint import pformat
+
+    history = FileHistory('./.model_test_history')
+
+    def get_color_style(sim):
+        SIM_COLORS = {
+            'low':          '#008080',
+            'normal':       '#5f9ea0',
+            'high':         '#87ceeb',
+            'extreme_high': '#afeeee'
+        }
+        sim_color = None
+        if sim >= 0.9:
+            sim_color = SIM_COLORS['extreme_high']
+        elif sim >= 0.8:
+            sim_color = SIM_COLORS['high']
+        elif sim >= 0.7:
+            sim_color = SIM_COLORS['normal']
+        else:
+            sim_color = SIM_COLORS['low']
+
+        class ColorStyle(Style):
+            styles = {
+                Token.String: '#ff8c00',
+                Token.Number: sim_color
+            }
+        return ColorStyle
+
+    logging.getLogger().setLevel(logging.ERROR)
     main(args)

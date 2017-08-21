@@ -3,3 +3,4 @@ __pycache__
 data/*.pkl
 data/*.npy
 data/*.model
+.model_test_history
