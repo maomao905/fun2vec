@@ -39,8 +39,15 @@ def _get_best_profile():
     logger.info('Running query...')
     user_funs = []
     for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
-        # funs: ['三浦半島探検','ヒリゾ','伊豆']
-        funs = _find_fun_part(_user.description)
+        profile = _user.description
+        # 公式アカウント・Botなどは除外
+        if _invalid_profile(profile):
+            continue
+
+        # url置き換え
+        profile = _replace_url(profile)
+
+        funs = _find_separated_fun_words(profile)
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
             user_funs.append(funs)
@@ -90,18 +97,13 @@ def _replace_url(text):
 def _invalid_profile(text):
     return bool(REGEX_INVALID.search(text))
 
-def _find_fun_part(text):
+def _find_separated_fun_words(text):
     """
     正規表現で「三浦半島探検/ヒリゾ/伊豆が好きです。」の部分だけを取得
     形態素解析で興味を抽出
+    return: ['三浦半島探検','ヒリゾ','伊豆']
     """
     fun_words = []
-    # 公式アカウント・Botなどは除外
-    if _invalid_profile(text):
-        return []
-
-    # url置き換え
-    text = _replace_url(text)
 
     ma = REGEX_FUNS.search(text)
     if ma is None:
@@ -130,14 +132,14 @@ def _find_fun_part(text):
                     # last_wordが原型と異なる場合
                     next_text = text[ma.end():]
                 # 残りの文を再起的に見る
-                fun_words.extend(_find_fun_part(next_text))
+                fun_words.extend(_find_separated_fun_words(next_text))
             else:
                 fun_words.extend(words)
         else:
             # 区切られた最後の文で何も取得できなかったとき
             if idx+1 == len(funs):
                 next_text = text[ma.end():]
-                fun_words.extend(_find_fun_part(next_text))
+                fun_words.extend(_find_separated_fun_words(next_text))
 
     return list(set(fun_words))
 
