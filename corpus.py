@@ -47,16 +47,16 @@ def _get_best_profile():
         # 公式アカウント・Botなどは除外
         if _invalid_profile(profile):
             continue
+
+        funs = []
         # url置き換え
         profile = _replace_url(profile)
 
-        _find_fun_words(profile)
-
-        funs = _find_separated_fun_words(profile)
+        funs.extend(_find_fun_words(profile))
+        funs.extend(_find_separated_fun_words(profile))
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
-            user_funs.append(funs)
-            # print(funs)
+            user_funs.append(list(set(funs)))
 
         if idx % 10000 == 0:
             logger.info('Finished {} profiles'.format(idx))
@@ -64,20 +64,22 @@ def _get_best_profile():
     return user_funs
 
 def _find_fun_words(text):
-    # for _regex in [REGEX_FUN_PREV, REGEX_HOBBY_FOLLOW,]:
-    #     matches = [res.group('fun') for res in _regex.finditer(text)]
-    #     if len(matches) > 0:
-    #         # import pdb; pdb.set_trace()
-    #         print('---------------------')
-    #         print(text)
-    #         print(matches)
-    # import pdb; pdb.set_trace()
+    fun_words = []
+    for _regex in [REGEX_FUN_PREV, REGEX_HOBBY_FOLLOW]:
+        matches = [res.group('fun') for res in _regex.finditer(text)]
+        for __ma in matches:
+            words = extract_words(__ma)
+            if len(words) > 0:
+                fun_words.extend(words)
+
     ma = REGEX_AND_FUN.search(text)
     if ma and 'とか' not in text:
-        print('-------------------')
-        print(text)
-        print(ma.group().split('と'))
+        for __ma in ma.group().split('と'):
+            words = extract_words(__ma)
+            if len(words) > 0:
+                fun_words.extend(words)
 
+    return fun_words
 
 def _find_separated_fun_words(text):
     """
@@ -123,7 +125,7 @@ def _find_separated_fun_words(text):
                 next_text = text[ma.end():]
                 fun_words.extend(_find_separated_fun_words(next_text))
 
-    return list(set(fun_words))
+    return fun_words
 
 def _replace_url(text):
     """
