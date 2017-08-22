@@ -51,51 +51,12 @@ def _get_best_profile():
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
             user_funs.append(funs)
+            print(funs)
 
         if idx % 10000 == 0:
             logger.info('Finished {} profiles'.format(idx))
 
     return user_funs
-
-def extend_funs(user_funs):
-    """
-    ユーザーの興味データを拡張し、辞書を作る
-    """
-    # Twitterプロフィール情報から作成したword2vecモデル
-    model = load_model('word2vec')
-    # 興味辞書
-    fun2id = defaultdict(lambda: len(fun2id))
-    for funs in user_funs:
-        # 興味３つの組み合わせを取得
-        combs = list(combinations(list(funs), 3))
-        random.shuffle(combs)
-        # 組み合わせの数が多すぎるので、興味の数だけ拡張を行う
-        combs = combs[:len(funs)]
-        # 既存の興味をまず辞書に登録
-        list(map(lambda f: fun2id[f], funs))
-        for idx, comb in enumerate(combs):
-            try:
-                # ３つの興味ベクトルを足して、それに近い興味も取得
-                near_funs = set(w for w, sim in model.most_similar(positive=list(comb), topn=3) if sim > 0.8)
-                # 辞書に登録
-                list(map(lambda f: fun2id[f], near_funs))
-            except KeyError:
-                # 対象の興味が存在しなかった場合はスキップ
-                continue
-    return fun2id
-
-def _replace_url(text):
-    """
-    urlを<URL>に置き換え
-    """
-    urls = REGEX_URL.findall(text)
-    for url in urls:
-        text = text.replace(url, '<URL>')
-
-    return text
-
-def _invalid_profile(text):
-    return bool(REGEX_INVALID.search(text))
 
 def _find_separated_fun_words(text):
     """
@@ -142,6 +103,46 @@ def _find_separated_fun_words(text):
                 fun_words.extend(_find_separated_fun_words(next_text))
 
     return list(set(fun_words))
+
+def _replace_url(text):
+    """
+    urlを<URL>に置き換え
+    """
+    urls = REGEX_URL.findall(text)
+    for url in urls:
+        text = text.replace(url, '<URL>')
+
+    return text
+
+def _invalid_profile(text):
+    return bool(REGEX_INVALID.search(text))
+
+def extend_funs(user_funs):
+    """
+    ユーザーの興味データを拡張し、辞書を作る
+    """
+    # Twitterプロフィール情報から作成したword2vecモデル
+    model = load_model('word2vec')
+    # 興味辞書
+    fun2id = defaultdict(lambda: len(fun2id))
+    for funs in user_funs:
+        # 興味３つの組み合わせを取得
+        combs = list(combinations(list(funs), 3))
+        random.shuffle(combs)
+        # 組み合わせの数が多すぎるので、興味の数だけ拡張を行う
+        combs = combs[:len(funs)]
+        # 既存の興味をまず辞書に登録
+        list(map(lambda f: fun2id[f], funs))
+        for idx, comb in enumerate(combs):
+            try:
+                # ３つの興味ベクトルを足して、それに近い興味も取得
+                near_funs = set(w for w, sim in model.most_similar(positive=list(comb), topn=3) if sim > 0.8)
+                # 辞書に登録
+                list(map(lambda f: fun2id[f], near_funs))
+            except KeyError:
+                # 対象の興味が存在しなかった場合はスキップ
+                continue
+    return fun2id
 
 manager = Manager(usage='Perform corpus operations')
 @manager.command
