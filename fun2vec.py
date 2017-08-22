@@ -1,5 +1,9 @@
 import os, sys
-import pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+import gzip
 from gensim.models import word2vec
 from flask_script import Manager
 import logging
@@ -15,23 +19,21 @@ config = load_config('file')
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
 def create_word2vec():
-    'Extract words -> Create corpus -> Create word2vec model'
-    with open(config['word2vec']['corpus'], 'rb') as f:
+    'Create word2vec model'
+    with gzip.open(config['word2vec']['corpus'], 'rb') as f:
         sentences = pickle.load(f)
     logger.info('Creating word2vec model...')
     model = word2vec.Word2Vec(sentences, size=500, min_count=30, window=5)
-    model.save(config['word2vec']['model'])
-    logger.info('Saved model in {}'.format(config['word2vec']['model']))
+    save_model(model, config['word2vec']['model'])
 
 @manager.command
 def create_fun2vec():
     'Create fun2vec model'
-    with open(config['fun2vec']['corpus'], 'rb') as f:
+    with gzip.open(config['fun2vec']['corpus'], 'rb') as f:
         sentences = pickle.load(f)
     # defaultでcbowらしい
-    model = word2vec.Word2Vec(sentences, size=200, min_count=30, window=20)
-    model.save(config['fun2vec']['model'])
-    logger.info('Saved model in {}'.format(config['fun2vec']['model']))
+    model = word2vec.Word2Vec(sentences, size=500, min_count=20, window=5)
+    save_model(model, config['fun2vec']['model'])
 
 @manager.option('-m', '--model', dest='model_name', default='fun2vec')
 @manager.option('-n', '--topn', dest='topn', default=300)
@@ -48,8 +50,13 @@ def check_vocab(model_name, topn, target_word):
             if idx >= int(topn):
                 break
 
+def save_model(model, file_path):
+    with gzip.open(file_path, 'wb') as f:
+        pickle.dump(model, f, protocol=2)
+    logger.info('Saved model in {}'.format(file_path))
+
 def load_model(model_name):
-    return word2vec.Word2Vec.load(config[model_name]['model'])
+    return word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
 
 def main(args):
     model_name = args.model

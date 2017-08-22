@@ -7,12 +7,16 @@ from itertools import combinations
 from collections import defaultdict, Counter
 from fun2vec import load_model
 import random
-import pickle
+import gzip
 import logging
 from pprint import pprint
 import pandas as pd
 import numpy as np
 from flask_script import Manager
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
@@ -157,7 +161,7 @@ def create_word2vec_corpus():
             corpus.append(words)
         if idx % 10000 == 0:
             logger.info('Finished {} records'.format(idx))
-    with open(config['word2vec']['corpus'], 'wb') as f:
+    with gzip.open(config['word2vec']['corpus'], 'wb') as f:
         pickle.dump(corpus, f)
     logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
 
@@ -167,7 +171,7 @@ def create_fun2vec_dictionary():
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
 
-    with open(config['fun2vec']['dictionary'], 'wb') as f:
+    with gzip.open(config['fun2vec']['dictionary'], 'wb') as f:
         pickle.dump(dictionary, f)
     logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
 
@@ -176,19 +180,19 @@ def create_simple_fun2vec_corpus():
     # most_similarでextendせずにcorpusを作る
     user_funs = _get_best_profile()
 
-    with open(config['fun2vec']['corpus'], 'wb') as f:
+    with gzip.open(config['fun2vec']['corpus'], 'wb') as f:
         pickle.dump(user_funs, f)
     logger.info('Saved corpus of {} profiles in {}'.format(len(user_funs), config['fun2vec']['corpus']))
 
 @manager.command
 def create_fun2vec_corpus():
     'use dictionary of extracted funs to create fun corpus from word corpus'
-    # with open(config['fun2vec']['dictionary'], 'rb') as f:
+    # with gzip.open(config['fun2vec']['dictionary'], 'rb') as f:
     #     dictionary = pickle.load(f)
     #     dictionary_words = list(dictionary.keys())
     dictionary_words = pd.read_csv('data/total_funs_v3.csv', header=None).values.flatten().tolist()
 
-    with open(config['word2vec']['corpus'], 'rb') as f:
+    with gzip.open(config['word2vec']['corpus'], 'rb') as f:
         word2vec_corpus = pickle.load(f)
 
     logger.info('Creating fun2vec corpus...')
@@ -201,7 +205,7 @@ def create_fun2vec_corpus():
         if idx % 10000 == 0:
             logger.info('Finished {} sentences'.format(idx))
 
-    with open(config['fun2vec']['corpus'], 'wb') as f:
+    with gzip.open(config['fun2vec']['corpus'], 'wb') as f:
         pickle.dump(fun2vec_corpus, f)
     logger.info('Saved corpus of {} sentences in {}'.format(len(fun2vec_corpus), config['fun2vec']['corpus']))
 

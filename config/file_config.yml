@@ -1,8 +1,8 @@
 word2vec:
-    corpus: data/word2vec_corpus.pkl
-    model: data/word2vec.model
+    corpus: data/word2vec_corpus.pkl.gz
+    model: data/word2vec.model.gz
 fun2vec:
-    corpus: data/fun2vec_corpus.pkl
-    model: data/fun2vec.model
-    dictionary: data/fun2vec_dictionary.pkl
+    corpus: data/fun2vec_corpus.pkl.gz
+    model: data/fun2vec.model.gz
+    dictionary: data/fun2vec_dictionary.pkl.gz
 stop_words: data/stop_words.csv

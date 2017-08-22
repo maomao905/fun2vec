@@ -1,6 +1,7 @@
 __pycache__
 .ipynb_checkpoints/
 data/*.pkl
+data/*.pkl.gz
 data/*.npy
-data/*.model
+data/*.model.gz
 .model_test_history
