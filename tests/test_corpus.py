@@ -1,9 +1,9 @@
 import unittest
-from corpus import _find_fun_part, _replace_url, _invalid_profile
+from corpus import _find_separated_fun_words, _replace_url, _invalid_profile
 
 class TestCorpus(unittest.TestCase):
 
-    def test_find_fun_part(self):
+    def test_find_separated_fun_words(self):
         TEXT1 = '脳内掃除として独り言をつぶやいてる会社員です。  好きなこと：酒、風呂、寝る。最近はブクマとして使ってるような･･･。ここでの発言は私個人の意見であり、所属する組織を代表するものではありません。'
         TEXT2 = 'Lv3娘との日常生活/洋裁/ゲーム Steam&PS4/FX&株…極稀に雑談配信やゲーム配信やってます。最近はPS4版Divisionをプレイしています。'
         TEXT3 = 'FateGOありがとう。拡散性ＭＡは滅ぼしましたので乖離性で傭兵メインでやってます。艦これは、矢矧大鳳初風浦風あきつ丸くれ。あ、あと、絶望した。'
@@ -21,31 +21,31 @@ class TestCorpus(unittest.TestCase):
         """
         興味を抽出する正規表現テスト
         """
-        self.assertCountEqual(_find_fun_part(TEXT14), ['自己完結','読書','音楽','映画','海外ドラマ','ダンス','ファン','成人','済','DC'])
-        self.assertCountEqual(_find_fun_part(TEXT1), ['酒', '風呂'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT14), ['自己完結','読書','音楽','映画','海外ドラマ','ダンス','ファン','成人','DC'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT1), ['酒', '風呂'])
         # 1文字
-        self.assertCountEqual(_find_fun_part(TEXT2), ['洋裁', 'ゲーム', '日常生活'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT2), ['洋裁', 'ゲーム', '日常生活'])
         # stop words
-        self.assertCountEqual(_find_fun_part(TEXT3), ['絶望'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT3), ['絶望'])
         # 英語
-        self.assertCountEqual(_find_fun_part(TEXT4), ['ビール', '箱根駅伝', '体操競技', '自転車', 'ジム', 'イカ'])
-        self.assertCountEqual(_find_fun_part(TEXT10), ['Apple', 'Ruby'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT4), ['ビール', '箱根駅伝', '体操競技', '自転車', 'ジム', 'イカ'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT10), ['Apple', 'Ruby'])
         # 記号()
-        self.assertCountEqual(_find_fun_part(TEXT5), ['歌仙', 'CECIL', '文', '蜂須賀', 'シノ', 'アル', '刀剣'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT5), ['歌仙', 'CECIL', '文', '蜂須賀', 'シノ', 'アル', '刀剣'])
         # # 複数回
-        self.assertCountEqual(_find_fun_part(TEXT6), ['ロック', '映画', '漫画', 'テレビ', 'ドラマ', 'アニメ'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT6), ['ロック', '映画', '漫画', 'テレビ', 'ドラマ', 'アニメ', '映画'])
         # 原型と違う場合
-        self.assertCountEqual(_find_fun_part(TEXT7), ['ソーラーカー', '西武', '台湾', '博覧会', '聖飢魔II', 'TMN'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT7), ['ソーラーカー', '西武', '台湾', '博覧会', '聖飢魔II', 'TMN'])
         # max length
-        self.assertCountEqual(_find_fun_part(TEXT8), ['千葉ロッテマリーンズ','FC東京','自転車','鉄道','自動車','遍界', 'バイク'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT8), ['千葉ロッテマリーンズ','FC東京','自転車','鉄道','自動車','遍界', 'バイク'])
         # スペースあり
-        self.assertCountEqual(_find_fun_part(TEXT9), ['ソフトウェア', 'ロックンロール', 'ラジオ', 'PUNK'])
-        self.assertCountEqual(_find_fun_part(TEXT11), ['コマツ', 'Ruby', 'PHP', '書き出し', '認識', '機械学習', 'K-POP', 'しまむら'])
-        self.assertCountEqual(_find_fun_part(TEXT12), ['Internet'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT9), ['ソフトウェア', 'ロックンロール', 'ラジオ', 'PUNK'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT11), ['コマツ', 'Ruby', 'PHP', '書き出し', '認識', '機械学習', 'K-POP', 'しまむら'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT12), ['Internet'])
 
         # 対応できていない例
         # 中に数字
-        self.assertCountEqual(_find_fun_part(TEXT13), ['WebGL'])
+        self.assertCountEqual(_find_separated_fun_words(TEXT13), ['WebGL'])
 
 
     def test_relace_url(self):
