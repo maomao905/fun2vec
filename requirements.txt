@@ -8,3 +8,4 @@ gensim==2.0.0
 mecab-python3==0.7
 ansible==2.3.0.0
 prompt-toolkit==1.0.15
+Pygments==2.2.0
