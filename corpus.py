@@ -1,5 +1,4 @@
 from model import create_session, User
-from sqlalchemy.sql.expression import text
 from util import read_sql, load_config
 from morph import extract_words
 import re
@@ -22,7 +21,6 @@ logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
 config = load_config('file')
-FILE_SQL = 'sql/filter_interests.sql'
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 12
 REGEX_CHAR = '[a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % MAX_WORD_LENGTH
