@@ -24,8 +24,12 @@ config = load_config('file')
 FILE_TOTAL_FUNS = 'data/total_funs_v3.csv'
 MAX_WORD_LENGTH = 12
 REGEX_CHAR = '[a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % MAX_WORD_LENGTH
-REGEX_FUNS = re.compile(r'({char}(?P<sep>とか|やら|、|,\s?|，|\s?/\s?|#|・|\s?／\s?|//|\|)(?:{char}(?P=sep))+{char})' \
+REGEX_FUN_PREV = re.compile(r'(?P<fun>{char}?)((する)?こと)?(に(興味|はまって)|(を|の?が)趣味|を(こよなく)?愛する|が?(?:大?好き|大好物))'.format(char=REGEX_CHAR))
+REGEX_HOBBY_FOLLOW = re.compile(r'趣味(は|で^す|：|:|→|⇒|\=)\s?(?P<fun>{char})'.format(char=REGEX_CHAR))
+REGEX_SEP_FUNS = re.compile(r'({char}(?P<sep>とか|やら|、|,\s?|，|\s?/\s?|#|・|\s?／\s?|//|\|)(?:{char}(?P=sep))+{char})' \
     .format(char=REGEX_CHAR), re.IGNORECASE)
+# REGEX_INTEREST_FOLLOW = re.compile(r'興味(は|：|:|→|⇒|\=|が?(有|あ)る(事|こと|も?の)は)\s?(?P<fun>{char})'.format(char=REGEX_CHAR))
+REGEX_AND_FUN = re.compile(r'((%s(?P<sep>とか?)){3,}%s)' % (REGEX_CHAR, REGEX_CHAR))
 REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
 REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
 
@@ -38,25 +42,42 @@ def _get_best_profile():
     session = create_session()
     logger.info('Running query...')
     user_funs = []
-    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300).limit(1000), 1):
         profile = _user.description
         # 公式アカウント・Botなどは除外
         if _invalid_profile(profile):
             continue
-
         # url置き換え
         profile = _replace_url(profile)
+
+        _find_fun_words(profile)
 
         funs = _find_separated_fun_words(profile)
         # 興味が２つ以上の場合だけ
         if len(funs) >= 2:
             user_funs.append(funs)
-            print(funs)
+            # print(funs)
 
         if idx % 10000 == 0:
             logger.info('Finished {} profiles'.format(idx))
 
     return user_funs
+
+def _find_fun_words(text):
+    # for _regex in [REGEX_FUN_PREV, REGEX_HOBBY_FOLLOW,]:
+    #     matches = [res.group('fun') for res in _regex.finditer(text)]
+    #     if len(matches) > 0:
+    #         # import pdb; pdb.set_trace()
+    #         print('---------------------')
+    #         print(text)
+    #         print(matches)
+    # import pdb; pdb.set_trace()
+    ma = REGEX_AND_FUN.search(text)
+    if ma and 'とか' not in text:
+        print('-------------------')
+        print(text)
+        print(ma.group().split('と'))
+
 
 def _find_separated_fun_words(text):
     """
@@ -66,7 +87,7 @@ def _find_separated_fun_words(text):
     """
     fun_words = []
 
-    ma = REGEX_FUNS.search(text)
+    ma = REGEX_SEP_FUNS.search(text)
     if ma is None:
         return []
 
@@ -172,8 +193,8 @@ def create_fun2vec_dictionary():
     logger.info('Extending funs to create dictionary...')
     dictionary = dict(extend_funs(user_funs))
 
-    with gzip.open(config['fun2vec']['dictionary'], 'wb') as f:
-        pickle.dump(dictionary, f)
+    # with gzip.open(config['fun2vec']['dictionary'], 'wb') as f:
+    #     pickle.dump(dictionary, f)
     logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
 
 @manager.command
