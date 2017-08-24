@@ -2,6 +2,7 @@ from sklearn.cluster import MiniBatchKMeans
 from fun2vec import load_model
 from sklearn.externals import joblib
 import numpy as np
+from collections import defaultdict
 
 FILE_FUN2VEC = 'data/fun.model'
 FILE_KMEANS = 'data/kmeans_fun.pkl'
@@ -14,7 +15,7 @@ def get_embeddings(model):
         embeddings[index, :] += model[word]
     return embeddings
 
-def cluster_funs(K):
+def cluster_funs_by_kmeans(K):
     """
     興味で同じような興味は塊が多すぎて、同じような興味が出てくるのでそれを防ぐため、clusteringする
     current vocab_size => len(model.wv.vocab) 23402
@@ -41,6 +42,60 @@ def check(words):
 def save(clf, file_path):
     joblib.dump(clf, file_path, compress=True)
 
+def cluster_funs(_model, funs):
+    """
+    Cluster funs to make each fun distinctive
+    funs: ['パソコン', 'スマホ', 'タブレット', '読書']
+    cluster key: most_similarで0.8以上の単語, score: cos類似度合計 group: most_similarした単語(funs)
+    cluster: {
+        'タブレット': {'score': 2.5830405950546265, 'group': {'スマホ', 'パソコン', 'タブレット'},
+        'スマホ':     {'score': 2.533282995223999,  'group': {'パソコン', 'タブレット', 'スマホ'},
+        'パソコン':   {'score': 2.5194380283355713, 'group': {'パソコン', 'タブレット', 'スマホ'},
+        '映画鑑賞':   {'score': 0.8885858058929443, 'group': {'読書'}
+    }
+    => scoreが一番高いものを採用しgroup(スマホ・パソコン)を'タブレット'にclusterする
+    (ただし、scoreが同じ場合は頻度が高い方にclusterする)
+    return: ['タブレット', '読書']
+    """
+    funs = set(funs)
+    cluster = defaultdict(lambda: dict(score=0, group=set()))
+    for fun in funs:
+        try:
+            res = _model.most_similar(positive=fun,topn=20)
+        except KeyError:
+            continue
+        for word, sim in res:
+            if sim < 0.8:
+                continue
+            cluster[word]['score'] += sim
+            cluster[word]['group'].add(fun)
+            # word自身がfunsにすでに入っている場合はその分一回カウントされないので、ここでカウント
+            if word in funs and word not in cluster[word]['group']:
+                cluster[word]['score'] += sim
+                cluster[word]['group'].add(word)
+    # sort by score
+    cluster = sorted(cluster.items(), key=lambda k:k[1]['score'], reverse=True)
+    pprint(cluster)
+    _clustered_funs = set()
+    for word, word_cluster in cluster:
+        # すでにクラスタリングされたwordは扱わない
+        # groupに２つ以上要素がない場合はクラスタリングする必要がないので何もしない
+        if word in _clustered_funs or len(word_cluster['group']-_clustered_funs) < 2:
+            continue
+        # クラスタリング
+        funs -= word_cluster['group']
+        funs.add(word)
+        # クラスタリングされたものを記録しておく
+        _clustered_funs.update(word_cluster['group'])
+        # さらにwordはクラスタリングする可能性があるので残す
+        _clustered_funs.discard(word)
+
+    print(funs)
+    return list(funs)
+
 if __name__ == '__main__':
-    # cluster_funs(5000)
-    check(['機械学習', 'プログラミング', 'エンジニア', 'サッカー', '野球', '英語'])
+    # cluster_funs(1000)
+    # check(['機械学習', 'プログラミング', 'エンジニア', 'サッカー', '野球', '英語'])
+    from pprint import pprint
+    model = load_model('word2vec')
+    cluster_funs(model, ['指原莉乃','大島優子','高橋みなみ','前田敦子','小嶋陽菜','北原里英','柏木由紀','瀧野由美子'])
