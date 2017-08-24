@@ -7,7 +7,8 @@
 引数は何個でも指定可能  
 引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力
 ```bash
-$ python fun2vec.py 機械学習 ビール アニメ
+$ python fun2vec.py
+words> 機械学習　アニメ　ビール
 ```
 
 ### コマンド使い方     
@@ -32,8 +33,12 @@ $ python manage.py fun2vec create_fun2vec_model
 
 ### 環境構築  
 ・MySQLインストール  
+```bash
+#テーブル作成
+$ python manage.py db init_db
+```
 ・python3インストール  
-・MeCabインストール  
+・MeCab + ipadic-neologd インストール  
 ・python moduleインストール
 ```bash
 $ pip install -r requirements.txt
@@ -44,7 +49,6 @@ $ pip install -r requirements.txt
 ```bash
 $ export FUN2VEC_SECRET_PASSWORD=xxxxx
 ```
-パスワードがわからない方は @maomao905 まで  
 
 ### テスト
 実行例
