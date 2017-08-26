@@ -7,6 +7,7 @@ from util import read_secrets
 import json
 import logging
 from pprint import pprint
+from time import sleep
 from flask_script import Manager
 
 logging.getLogger().setLevel(logging.INFO)
