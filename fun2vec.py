@@ -22,17 +22,22 @@ def create_word2vec():
     'Create word2vec model'
     with gzip.open(config['word2vec']['corpus'], 'rb') as f:
         sentences = pickle.load(f)
-    logger.info('Creating word2vec model...')
-    model = word2vec.Word2Vec(sentences, size=500, min_count=30, window=5)
+    logger.info('Creating word2vec model from {} sentences...'.format(len(sentences)))
+    model = word2vec.Word2Vec(sentences, size=500, min_count=30, window=5, compute_loss=True)
+    model.init_sims(replace=True) # to trim unneeded model memory by L2-norm
+    logger.info('Loss is {}'.format(model.get_latest_training_loss()))
     save_model(model, config['word2vec']['model'])
 
 @manager.command
 def create_fun2vec():
     'Create fun2vec model'
     with gzip.open(config['fun2vec']['corpus'], 'rb') as f:
-        sentences = pickle.load(f)
-    # defaultでcbowらしい
-    model = word2vec.Word2Vec(sentences, size=500, min_count=20, window=5)
+        funs = pickle.load(f)
+    logger.info('Creating fun2vec model from {} sentences...'.format(len(funs)))
+    # cbow is default
+    model = word2vec.Word2Vec(funs, size=500, min_count=30, window=20, compute_loss=True)
+    model.init_sims(replace=True)
+    logger.info('Loss is {}'.format(model.get_latest_training_loss()))
     save_model(model, config['fun2vec']['model'])
 
 @manager.option('-m', '--model', dest='model_name', default='fun2vec')
@@ -98,56 +103,10 @@ if __name__ == '__main__':
     from prompt_toolkit.history import FileHistory
     from prompt_toolkit import prompt
     from pygments import highlight
-    from pygments.lexer import RegexLexer
     from pygments.formatters import Terminal256Formatter
-    from pygments.style import Style
-    from pygments.token import Token, String, Number
-    import re
+    from util import ljust_ja, CustomLexer, get_color_style
 
     history = FileHistory('./.model_test_history')
-
-    def ljust_ja(text, length):
-        text_length = 0
-        for char in text:
-            if ord(char) <= 255:
-                text_length += 1
-            else:
-                text_length += 2
-
-        return text + (length - text_length) * ' '
-
-    class CustomLexer(RegexLexer):
-        flags = re.IGNORECASE
-        tokens = {
-            'root': [
-                (r'^[^\W]+',    String),
-                (r'0\.[0-9]+$', Number)
-            ]
-        }
-
-    def get_color_style(sim):
-        SIM_COLORS = {
-            'low':          '#b22222',
-            'normal':       '#00bfff',
-            'high':         '#ansiteal',
-            'extreme_high': '#ansiturquoise'
-        }
-        sim_color = None
-        if sim >= 0.9:
-            sim_color = SIM_COLORS['extreme_high']
-        elif sim >= 0.8:
-            sim_color = SIM_COLORS['high']
-        elif sim >= 0.7:
-            sim_color = SIM_COLORS['normal']
-        else:
-            sim_color = SIM_COLORS['low']
-
-        class ColorStyle(Style):
-            styles = {
-                Token.String: '#ff8c00',
-                Token.Number: sim_color
-            }
-        return ColorStyle
 
     logging.getLogger().setLevel(logging.ERROR)
     main(args)
