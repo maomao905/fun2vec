@@ -87,17 +87,14 @@ def cluster_funs(_model, funs):
     def _compare(f1, f2):
         """
         score(cos類似度の合計)が高いもの順にソートするが、
-        同一scoreの場合は単語の頻度が高いを優先する
+        同一scoreの場合は単語の頻度が高いを方を優先する
         """
         if f1[1]['score'] == f2[1]['score']:
-            print(f1[0], model.wv.vocab[f1[0]].count)
-            print(f2[0], model.wv.vocab[f2[0]].count)
-            return 1 if model.wv.vocab[f1[0]].count > model.wv.vocab[f2[0]].count else -1
+            return 1 if _model.wv.vocab[f1[0]].count > _model.wv.vocab[f2[0]].count else -1
         else:
             return 1 if f1[1]['score'] > f2[1]['score'] else -1
 
     cluster = sorted(cluster.items(), key=cmp_to_key(_compare), reverse=True)
-    pprint(cluster)
     _clustered_funs = set()
     for word, word_cluster in cluster:
         # すでにクラスタリングされたwordは扱わない
@@ -114,18 +111,9 @@ def cluster_funs(_model, funs):
         # さらにwordはクラスタリングする可能性があるので残す
         _clustered_funs.discard(word)
 
-    print(funs)
     return list(funs)
 
 if __name__ == '__main__':
-    # cluster_funs(1000)
-    # check(['機械学習', 'プログラミング', 'エンジニア', 'サッカー', '野球', '英語'])
     from pprint import pprint
     model = load_model('word2vec')
     cluster_funs(model, ['ビール','焼酎','ワイン','シャンパン'])
-    # cluster_funs(model, ['Perl','PHP','Ruby'])
-    # cluster_funs(model, ['育児','芝居','宝塚','歌舞伎','映画','漫画','柴犬'])
-    # cluster_funs(model, ['料理','競馬','歴史','野球','相撲'])
-    # cluster_funs(model, ['指原莉乃','大島優子','高橋みなみ','前田敦子','小嶋陽菜','北原里英','柏木由紀','瀧野由美子'])
-    # cluster_funs(model, ['スポーツ観戦', 'お笑い', 'フットサル', '映画', 'プログラミング', 'エンジニア', 'サッカー', '英語'])
-    # cluster_funs(model, [ 'アイドル','２次元','ゲーム','アニメ','音楽'])
