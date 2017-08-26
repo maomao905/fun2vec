@@ -42,7 +42,7 @@ def _get_best_profile():
     session = create_session()
     logger.info('Running query...')
     user_funs = []
-    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300).limit(1000), 1):
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
         profile = _user.description
         # 公式アカウント・Botなどは除外
         if _invalid_profile(profile):
@@ -55,8 +55,9 @@ def _get_best_profile():
         funs.extend(_find_fun_words(profile))
         funs.extend(_find_separated_fun_words(profile))
         # 興味が２つ以上の場合だけ
+        funs = list(set(funs))
         if len(funs) >= 2:
-            user_funs.append(list(set(funs)))
+            user_funs.append(funs)
 
         if idx % 10000 == 0:
             logger.info('Finished {} profiles'.format(idx))
@@ -172,19 +173,23 @@ manager = Manager(usage='Perform corpus operations')
 def create_word2vec_corpus():
     corpus = []
     session = create_session()
-    logger.info('Fetching twitter profile data from DB...')
-    res = session.query(User.description).filter(User.verified==0).all() # 公式アカウントは除く
-    logger.info('Fetched {} twitter profiles'.format(len(res)))
-    logger.info('Extracting words from twitter profiles...')
-    for idx, profile in enumerate(res, 1):
-        profile = profile[0]
-        if profile is None:
+    logger.info('Running query and Extracting words...')
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
+        profile = _user.description
+        # 公式アカウント・Botなどは除外
+        if _invalid_profile(profile):
             continue
+        # url置き換え
+        profile = _replace_url(profile)
+        # 単語取得
         words = extract_words(profile)
+        # 単語が２つ以上の場合だけ
         if len(words) >= 2:
             corpus.append(words)
+
         if idx % 10000 == 0:
-            logger.info('Finished {} records'.format(idx))
+            logger.info('Finished {} profiles'.format(idx))
+
     with gzip.open(config['word2vec']['corpus'], 'wb') as f:
         pickle.dump(corpus, f)
     logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
@@ -276,10 +281,10 @@ def create_dictionary_from_samples():
                 if len(df) % 1000 == 0:
                     logger.info('Total {} vocabs'.format(len(df)))
                 # 辞書2000語になったら終了した
-                if len(df) >= 2000:
+                if len(df) >= 1000:
                     break
 
-    # df.to_csv(FILE_TOTAL_FUNS, index=False, header=False)
+    df.to_csv(FILE_TOTAL_FUNS, index=False, header=False)
     logger.info('Done! Saved {} vocabs in {}'.format(len(df), FILE_TOTAL_FUNS))
 
 def get_middle_words(model, w1, w2):
