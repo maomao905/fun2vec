@@ -8,8 +8,8 @@ logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
 REGEX_JA = re.compile(r'[ぁ-んァ-ン一-龥]')
-REGEX_HIRA = re.compile(r'^[ぁ-ん]{2}$')
-REGEX_EN = re.compile(r'[a-zA-Z]+')
+REGEX_EN = re.compile(r'[a-z]+', re.IGNORECASE)
+REGEX_STOP_CHAR = re.compile(r'^([a-zァ-ン]|[ぁ-ん]{1,2})$', re.IGNORECASE)
 
 UNKNOWN_MARK = '*'
 
@@ -39,9 +39,9 @@ def extract_words(sentence):
 def valid_genkei(genkei, stop_words):
     """
     原型をチェック
-    １文字だけ、ひらがな２文字は省く
+    英語・カタカナ１文字だけ、ひらがな１文字or２文字は省く
     """
-    return (not bool(REGEX_HIRA.match(genkei)) and genkei != UNKNOWN_MARK \
+    return (not bool(REGEX_STOP_CHAR.match(genkei)) and genkei != UNKNOWN_MARK \
         and genkei not in stop_words)
 
 def check_ja(text):
