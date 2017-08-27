@@ -4,6 +4,16 @@ from sklearn.externals import joblib
 import numpy as np
 from collections import defaultdict
 from functools import cmp_to_key
+from gensim.models import LdaModel
+from gensim import corpora
+import pickle, gzip
+from util import load_config
+import logging
+
+logging.config.dictConfig(load_config('log'))
+logger = logging.getLogger(__name__)
+
+config = load_config('file')
 
 FILE_FUN2VEC = 'data/fun.model'
 FILE_KMEANS = 'data/kmeans_fun.pkl'
@@ -113,7 +123,26 @@ def cluster_funs(_model, funs):
 
     return list(funs)
 
+def find_topic():
+    """
+    LdaModel params
+        passes: Number of passes through the entire corpus
+        chunk_size: how many documents to load into memory
+        update_every: number of chunks to process prior to moving onto the M step of EM
+    """
+    with gzip.open(config['fun2vec']['corpus'], 'rb') as f:
+        words = pickle.load(f)
+    # 辞書作成
+    dictionary = corpora.Dictionary(words)
+    dictionary.filter_extremes(no_below=30, no_above=0.3)
+
+    # コーパスを作成
+    corpus = [dictionary.doc2bow(_words) for _words in words]
+    # corpora.MmCorpus.serialize('cop.mm', corpus)
+    lda = LdaModel(corpus, num_topics=10, chunksize=10000, update_every=2, id2word=dictionary)
+    lda.save(config['topic_model'])
+    pprint(lda.show_topics(num_words=20))
+
 if __name__ == '__main__':
     from pprint import pprint
-    model = load_model('word2vec')
-    cluster_funs(model, ['ビール','焼酎','ワイン','シャンパン'])
+    find_topic()
