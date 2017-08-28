@@ -338,6 +338,19 @@ def get_middle_words(model, w1, w2):
     res = [(w, sim) for w, sim in res if w not in [w1, w2]]
     pprint(res)
 
+@manager.option('-m', '--model_name', dest='model_name')
+@manager.option('-n', '--topn', dest='topn', default=100)
+def check_corpus(model_name, topn):
+    """
+    corpusチェック
+    randomにtopn件のprofile(単語リスト)取得
+    """
+    with gzip.open(config[model_name]['corpus'], 'rb') as f:
+        corpus = pickle.load(f)
+    for profile in random.sample(corpus, topn):
+        print('-' * 50)
+        print(profile)
+
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.ERROR)
     from gensim import matutils
