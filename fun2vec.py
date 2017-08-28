@@ -35,7 +35,7 @@ def create_fun2vec():
         funs = pickle.load(f)
     logger.info('Creating fun2vec model from {} sentences...'.format(len(funs)))
     # cbow is default
-    model = word2vec.Word2Vec(funs, size=500, min_count=30, window=20, compute_loss=True)
+    model = word2vec.Word2Vec(funs, size=500, min_count=10, window=5, compute_loss=True)
     model.init_sims(replace=True)
     logger.info('Loss is {}'.format(model.get_latest_training_loss()))
     save_model(model, config['fun2vec']['model'])
@@ -61,7 +61,13 @@ def save_model(model, file_path):
     logger.info('Saved model in {}'.format(file_path))
 
 def load_model(model_name):
-    return word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
+    model = word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
+    print(model_name.center(70, '-'))
+    print('corpus size:', str(model.corpus_count // 10000) + '万')
+    print('vocab size:', str(len(model.wv.vocab) // 10000) + '万')
+    print('loss:', str(model.get_latest_training_loss() // 10000) + '万')
+    # memory friendly
+    return model.wv
 
 def main(args):
     model_name = args.model
@@ -77,9 +83,11 @@ def main(args):
             text = prompt('words> ', history=history)
             if not text:
                 continue
+            if text == 'exit':
+                raise KeyboardInterrupt
             for name, model in models.items():
                 try:
-                    print('--------------', name, '--------------')
+                    print(name.center(70, '-'))
                     for word, sim in model.most_similar(positive=text.split(), topn=topn, restrict_vocab=restrict_vocab):
                         word = ljust_ja(word, 20)
                         sim = round(sim, 3)
