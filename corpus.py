@@ -43,7 +43,7 @@ def _get_best_profile():
     session = create_session()
     logger.info('Running query...')
     user_funs = []
-    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(500), 1):
         profile = _user.description
         # 公式アカウント・Botなどは除外
         if _invalid_profile(profile):
@@ -175,7 +175,7 @@ def create_word2vec_corpus():
     corpus = []
     session = create_session()
     logger.info('Running query and Extracting words...')
-    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(300), 1):
+    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(500), 1):
         profile = _user.description
         # 公式アカウント・Botなどは除外
         if _invalid_profile(profile):
@@ -227,9 +227,9 @@ def create_clustered_fun2vec_corpus():
         clustered_corpus.append(cluster_funs(model, user_funs))
         if i % 10000 == 0:
             logger.info('Finished {} profiles'.format(i))
-    with gzip.open(config['fun2vec']['corpus_clustered'], 'wb') as f:
+    with gzip.open(config['fun2vec_clustered']['corpus'], 'wb') as f:
         pickle.dump(clustered_corpus, f)
-        logger.info('Saved corpus of {} profiles in {}'.format(len(clustered_corpus), config['fun2vec']['corpus_clustered']))
+        logger.info('Saved corpus of {} profiles in {}'.format(len(clustered_corpus), config['fun2vec_clustered']['corpus']))
 
 @manager.command
 def create_fun2vec_corpus():

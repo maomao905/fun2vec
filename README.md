@@ -3,6 +3,17 @@
 この人は〇〇が好きで〇〇が好きであると〇〇が好きである可能性が高い  
 そこには関係性があるはずでその関係性がわかったら面白い  
 
+### モデル作成
+- word2vec corpus作成  
+DBから全profile取得して形態素解析してcorpus保存
+- fun2vec corpus作成  
+DBからprofile取得して興味部分を抽出して保存
+- word2vec model作成  
+- fun2vec model作成  
+- fun2vec clustered corpus作成  
+fun2vecの興味をdistinctiveにするために、word2vecのmost_similarで似た興味をグループ化
+- fun2vec clustered model作成  
+
 ### モデル精度確認  
 引数は何個でも指定可能  
 引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力
@@ -42,6 +53,16 @@ $ python manage.py db init_db
 ・python moduleインストール
 ```bash
 $ pip install -r requirements.txt
+```
+
+### Mecabオリジナル辞書コンパイル
+```bash
+$ /usr/local/Cellar/mecab/0.996/libexec/mecab/mecab-dict-index \
+-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd \
+-u data/original_dict.dic \
+-f utf-8 \
+-t utf-8 \
+data/original_dict.csv
 ```
 
 ### 秘密情報のパスワード  

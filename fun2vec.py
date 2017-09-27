@@ -23,7 +23,7 @@ def create_word2vec():
     with gzip.open(config['word2vec']['corpus'], 'rb') as f:
         sentences = pickle.load(f)
     logger.info('Creating word2vec model from {} sentences...'.format(len(sentences)))
-    model = word2vec.Word2Vec(sentences, size=500, min_count=30, window=5, compute_loss=True)
+    model = word2vec.Word2Vec(sentences, size=700, min_count=30, window=5, compute_loss=True)
     model.init_sims(replace=True) # to trim unneeded model memory by L2-norm
     logger.info('Loss is {}'.format(model.get_latest_training_loss()))
     save_model(model, config['word2vec']['model'])
@@ -35,7 +35,7 @@ def create_fun2vec():
         funs = pickle.load(f)
     logger.info('Creating fun2vec model from {} sentences...'.format(len(funs)))
     # cbow is default
-    model = word2vec.Word2Vec(funs, size=500, min_count=10, window=5, compute_loss=True)
+    model = word2vec.Word2Vec(funs, size=700, min_count=20, window=20, compute_loss=True)
     model.init_sims(replace=True)
     logger.info('Loss is {}'.format(model.get_latest_training_loss()))
     save_model(model, config['fun2vec']['model'])
@@ -46,12 +46,12 @@ def create_fun2vec():
 def check_vocab(model_name, topn, target_word):
     'Check model vocabrary in frequent order'
     logging.getLogger().setLevel(logging.ERROR)
-    model = load_model(model_name)
+    model = load_model(model_name).wv
     if target_word:
-        print(model.wv.vocab[target_word].count, target_word)
+        print(model.vocab[target_word].count, target_word)
     else:
-        for idx, word in enumerate(model.wv.index2word):
-            print(model.wv.vocab[word].count, word)
+        for idx, word in enumerate(model.index2word):
+            print(model.vocab[word].count, word)
             if idx >= int(topn):
                 break
 
@@ -64,7 +64,7 @@ def load_model(model_name):
     model = word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
     print(model_name.center(70, '-'))
     print('corpus size:', str(model.corpus_count // 10000) + '万')
-    print('vocab size:', str(len(model.wv.vocab) // 10000) + '万')
+    print('vocab size:', '{:,}'.format(len(model.wv.vocab)))
     print('loss:', str(model.get_latest_training_loss() // 10000) + '万')
     # memory friendly
     return model.wv
@@ -77,7 +77,7 @@ def main(args):
     if model_name in ['word2vec', 'all']:
         models['word2vec'] = load_model('word2vec')
     if model_name in ['fun2vec', 'all']:
-        models['fun2vec'] = load_model('fun2vec')
+        models['fun2vec_clustered'] = load_model('fun2vec_clustered')
     try:
         while True:
             text = prompt('words> ', history=history)

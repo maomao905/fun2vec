@@ -58,7 +58,7 @@ def check_en(text):
 
 def filter_feature(features):
     if features[0] == '名詞' and features[1] in ['一般', 'サ変接続', '固有名詞']:
-        if features[2] in ['地域', '人名']:
+        if features[2] in ['地域']:
             return False
         return True
     else:
@@ -94,7 +94,7 @@ def find_close_words():
         df.set_value(df[df.replace_word == row.replace_word].index[0], 'replace_word',\
             df[df.word == row.replace_word].replace_word.values[0])
     df.drop_duplicates(subset=['replace_word', 'word'], inplace=True)
-    df.to_csv('data/close_word.tsv', sep='\t', index=False)
+    df.to_csv('data/close_word.tsv', index=False)
 
 def create_original_dictionary():
     import pandas as pd

@@ -81,7 +81,7 @@ def cluster_funs(_model, funs):
             except_funs.add(fun)
             continue
         for word, sim in res:
-            if sim < 0.8:
+            if sim < 0.6:
                 continue
             # 5桁以上同じ場合は単語の頻度を優先させた方がよさそう
             sim = round(sim, 5)
