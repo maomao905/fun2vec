@@ -35,7 +35,10 @@ def decrypt():
         data = f.read()
     vault_lib = VaultLib(os.environ['FUN2VEC_SECRET_PASSWORD'])
     if vault.is_encrypted(data):
-        data = yaml.load(vault_lib.decrypt(data))
+        try:
+            data = yaml.load(vault_lib.decrypt(data, filename=None))
+        except Exception as e:
+            import pdb; pdb.set_trace()
         if 'private_key' in data:
             data['private_key'] = data['private_key'].replace('\\n', '\n')
     else:

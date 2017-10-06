@@ -5,3 +5,4 @@ data/*.pkl.gz
 data/*.npy
 data/*.model.gz
 .model_test_history
+config/secrets.yml
