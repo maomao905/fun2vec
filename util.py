@@ -24,49 +24,10 @@ def read_sql(file_path):
     return sql
 
 def read_secrets(key):
-    return decrypt().get(key)
-
-def decrypt():
-    """
-    Decrypt secrets.yml
-    """
-    file_path = os.path.join('config', 'secrets.yml')
-    with open(file_path, 'rb') as f:
-        data = f.read()
-    vault_lib = VaultLib(os.environ['FUN2VEC_SECRET_PASSWORD'])
-    if vault.is_encrypted(data):
-        try:
-            data = yaml.load(vault_lib.decrypt(data, filename=None))
-        except Exception as e:
-            import pdb; pdb.set_trace()
-        if 'private_key' in data:
-            data['private_key'] = data['private_key'].replace('\\n', '\n')
-    else:
-        data = yaml.load(data)
-    return data
-
-manager = Manager(usage='Perform util commands')
-@manager.command
-def encrypt():
-    'Encrypt secrets.yml'
-    file_path = os.path.join('config', 'secrets.yml')
-    with open(file_path, 'r') as f:
+    FILE_SECRETS = os.path.join('config', 'secrets.yml')
+    with open(FILE_SECRETS, 'r') as f:
         data = yaml.load(f)
-    if vault.is_encrypted(data):
-        return
-    vault_lib = VaultLib(os.environ['FUN2VEC_SECRET_PASSWORD'])
-    with open(file_path,'wb') as f:
-        f.write(vault_lib.encrypt(data))
-        logger.info('{} encrypted'.format(file_path))
-
-@manager.command
-def decrypt_dump():
-    'Decrypt and Dump secrets.yml'
-    file_path = os.path.join('config', 'secrets.yml')
-    data = decrypt()
-    with open(file_path, 'w') as f:
-        f.write(yaml.dump(data, default_flow_style=False))
-    logger.info('Decrypted and dumped in {}'.format(file_path))
+    return data.get(key)
 
 def ljust_ja(text, length):
     text_length = 0
