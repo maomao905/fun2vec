@@ -1,7 +1,5 @@
 import os
 import json, yaml
-from ansible.parsing import vault
-from ansible.parsing.vault import VaultLib
 import logging
 import logging.config
 from flask_script import Manager
