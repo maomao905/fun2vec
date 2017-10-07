@@ -1,4 +1,4 @@
-from model import create_session, User
+from db import create_session, User
 from util import read_sql, load_config
 from morph import extract_words
 import re
