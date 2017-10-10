@@ -3,6 +3,12 @@
 この人は〇〇が好きで〇〇が好きであると〇〇が好きである可能性が高い  
 そこには関係性があるはずでその関係性がわかったら面白い  
 
+### 前処理
+0. 辞書構築 [new_word.tsv](data/new_word.tsv) + [close_word.tsv](data/close_word.tsv) + [close_word_original.tsv](data/close_word_original.tsv) をmergeしてcompileする
+1. 形態素解析 [morph.py](morph.py)
+2. 単語を正規化 [clean_word.py](clean_word.py)
+3. ストップワードは無視 [stop_words.csv](data/stop_words.csv)
+
 ### モデル作成
 - word2vec corpus作成  
 DBから全profile取得して形態素解析してcorpus保存
