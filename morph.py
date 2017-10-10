@@ -96,37 +96,6 @@ def find_close_words():
     df.drop_duplicates(subset=['replace_word', 'word'], inplace=True)
     df.to_csv('data/close_word.tsv', index=False)
 
-def create_original_dictionary():
-    import pandas as pd
-    res = []
-    df = pd.read_csv('data/close_word.tsv', sep='\t')
-    for row in df.itertuples():
-        morph = replace_morph(row.word, row.replace_word)
-        if morph:
-            res.append(morph + '\n')
-
-    with open('data/original_dic.csv', 'w') as f:
-        f.writelines(res)
-
-def replace_morph(word, replace_word):
-    """
-    日本語で名詞 or 形容詞を取得
-    """
-    if word != word or word == replace_word:
-        return
-    tagger = MeCab.Tagger()
-    tagger.parse('')
-    try:
-        node = tagger.parseToNode(word)
-    except TypeError:
-        import pdb; pdb.set_trace()
-    while node:
-        if node.surface:
-            features = node.feature.split(',')
-            features[6] = replace_word
-        node = node.next
-    return '{},,,1,'.format(word) + ','.join(features)
-
 if __name__ == '__main__':
     create_original_dictionary()
     # replace_morph('寿司', 'お寿司')
