@@ -75,6 +75,7 @@ $ export FUN2VEC_SECRET_PASSWORD=xxxxx
 実行例
 ```bash
 $ python -m unittest tests.test_corpus
+$ py.test <test_file>
 ```
 
 #### 補足  
