@@ -5,6 +5,7 @@ PTN_REPLACE = (
     (r'JR', 'JR'),
     (r'受験', '受験'),
     (r'姉妹', '姉妹'),
+    (r'iPhone', 'iPhone'),
 )
 
 PTN_EXCLUDE = (
