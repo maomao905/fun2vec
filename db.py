@@ -29,12 +29,27 @@ class User(Base):
     statuses_count        = Column(Integer, nullable=True, comment='The number of Tweets (including retweets) issued by the user')
     favourites_count      = Column(Integer, nullable=True, comment='The number of Tweets this user has liked in the account’s lifetime')
     verified              = Column(Boolean, nullable=True, comment='When true, indicates that the user has a verified account')
+    created_at            = Column(DateTime, nullable=False, default=datetime.now)
+    updated_at            = Column(DateTime, nullable=False, onupdate=datetime.now)
+
+    def __init__(self, **kwargs):
+        self.id = kwargs['id']
+        self.screen_name           = kwargs['screen_name']
+        self.description           = kwargs['description']
+        self.default_profile_image = kwargs['default_profile_image']
+        self.followers_count       = kwargs['followers_count']
+        self.friends_count         = kwargs['friends_count']
+        self.statuses_count        = kwargs['statuses_count']
+        self.favourites_count      = kwargs['favourites_count']
+        self.verified              = kwargs['verified']
+        self.created_at            = datetime.now()
+        self.updated_at            = datetime.now()
 
     def __repr__(self):
         return '<User id={id} screen_name={screen_name} description={description}>'.format(
                 id=self.id, screen_name=self.screen_name, description=self.description)
 
-class Friends(Base):
+class Friend(Base):
     """
     Table of the relationships between the user and his/her friend.
     """
@@ -43,6 +58,12 @@ class Friends(Base):
     friend_id    = Column(BigInteger, primary_key=True, autoincrement=False, comment='friend unique id')
     created_at   = Column(DateTime, nullable=False, default=datetime.now)
     updated_at   = Column(DateTime, nullable=False, onupdate=datetime.now)
+
+    def __init__(self, **kwargs):
+        self.user_id    = kwargs['user_id']
+        self.friend_id  = kwargs['friend_id']
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
 
     def __repr__(self):
         return f'<user_id={self.user_id} friend_id={self.friend_id}>'
