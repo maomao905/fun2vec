@@ -224,7 +224,9 @@ def create_clustered_fun2vec_corpus():
     model = load_model('word2vec')
     clustered_corpus = []
     for i, user_funs in enumerate(corpus, 1):
-        clustered_corpus.append(cluster_funs(model, user_funs))
+        funs = cluster_funs(model, user_funs)
+        if len(funs) >= 2:
+            clustered_corpus.append(funs)
         if i % 10000 == 0:
             logger.info('Finished {} profiles'.format(i))
     with gzip.open(config['fun2vec_clustered']['corpus'], 'wb') as f:
