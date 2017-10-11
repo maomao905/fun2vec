@@ -19,3 +19,13 @@ api limit
 follower数が多いユーザー取得できたらいいな
 
 wikipediaのタイトルでランダムにsearch
+
+***
+
+・following usersのprofile infoも取得（一度に200件まで）
+https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-friends-list
+Results are given in groups of 20 users and multiple pages of results can be navigated through using the next_cursor value in subsequent requests
+
+・following usersのidを取得（一度に5000件まで）
+GET friends/ids
+https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-friends-ids
