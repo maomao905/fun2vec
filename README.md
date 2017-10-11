@@ -3,11 +3,24 @@
 この人は〇〇が好きで〇〇が好きであると〇〇が好きである可能性が高い  
 そこには関係性があるはずでその関係性がわかったら面白い  
 
+### データ収集
+- Twitter profileをAPIから取得
+- Twitterで誰が誰をフォローしているかの情報をAPIから取得
+- フォロー関係から興味・趣味データを拡大していく
+
 ### 前処理
-0. 辞書構築 [new_word.tsv](data/new_word.tsv) + [close_word.tsv](data/close_word.tsv) + [close_word_original.tsv](data/close_word_original.tsv) をmergeしてcompileする
+0. 辞書構築 [new_word.tsv](data/new_word.tsv) + [close_word.tsv](data/close_word.tsv) + [close_word_original.tsv](data/close_word_original.tsv) を使って独自辞書を作成
 1. 形態素解析 [morph.py](morph.py)
 2. 単語を正規化 [clean_word.py](clean_word.py)
 3. ストップワードは無視 [stop_words.csv](data/stop_words.csv)
+
+### close word作り方
+- 並列なものだけにする。  
+ok 俳優,俳優さん  
+bad 俳優,若手俳優  
+bad ワイン, 白ワイン
+ただし、二つの後の意味の違いが意味をなさないようなものはok
+ok 代表,副代表
 
 ### モデル作成
 - word2vec corpus作成  
@@ -15,10 +28,11 @@ DBから全profile取得して形態素解析してcorpus保存
 - fun2vec corpus作成  
 DBからprofile取得して興味部分を抽出して保存
 - word2vec model作成  
-- fun2vec model作成  
+- fun2vec corpus作成  
+この際にuser_idを保存する必要がある  
 - fun2vec clustered corpus作成  
-fun2vecの興味をdistinctiveにするために、word2vecのmost_similarで似た興味をグループ化
-- fun2vec clustered model作成  
+fun2vecの興味をdistinctiveにするために、fun2vecのcorpusをword2vecのmost_similarで似た興味をグループ化  
+- fun2vec clustered model作成
 
 ### モデル精度確認  
 引数は何個でも指定可能  
@@ -41,8 +55,6 @@ $ python manage.py fun2vec create_fun2vec_model
 |親コマンド|子コマンド|説明|
 |---|---|---|
 |db|init_db|全てのテーブルを新規作成します|
-|util|encrypt|秘密情報(secrets.yml)を暗号化します(秘密情報を編集した後暗号化するのに使用)|
-|util|decrypt_dump|秘密情報(secrets.yml)を復号化します(秘密情報を編集するのに使用)|
 |twitter|scrape|TwitterプロフィールデータをTwitter APIを叩いて収集します|
 |fun2vec|create_word2vec|Twitterプロフィールデータを形態素解析し、分かち書きした後word2vecモデルを新規作成します|
 |fun2vec|create_fun2vec|既存のword2vec, 辞書とコーパスを使い最適な興味ベクトルを作る|
