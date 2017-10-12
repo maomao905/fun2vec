@@ -60,6 +60,17 @@ def save_model(model, file_path):
         pickle.dump(model, f, protocol=2)
     logger.info('Saved model in {}'.format(file_path))
 
+def test_visualize(wv):
+    """
+    ref: http://projector.tensorflow.org/
+    """
+    import pandas as pd
+    df_wv = pd.DataFrame([wv.word_vec(w) for w in wv.index2word])
+    df_meta = pd.DataFrame(wv.index2word)
+
+    df_wv.to_csv('data/wv.tsv', sep='\t', header=False, index=False)
+    df_meta.to_csv('data/metadata.tsv', sep='\t', header=False, index=False)
+
 def load_model(model_name):
     model = word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
     print(model_name.center(70, '-'))
