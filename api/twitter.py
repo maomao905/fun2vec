@@ -47,7 +47,7 @@ def _get_auth():
 
 manager = Manager(usage='Scraping Twitter data')
 @manager.command
-def scrape_profile():
+def scrape_user():
     """
     Scrape Twitter profile data
     """
@@ -68,13 +68,15 @@ def scrape_profile():
     )
     if res.ok:
         session = create_session()
-        for line in res.iter_lines():
+        for idx, line in enumerate(res.iter_lines(), 1):
             try:
                 if line:
                     info = json.loads(line.decode('utf-8'))
                     # save users in DB
                     for user_info in _extract_user_info(info):
                         _save_user_info(session, user_info)
+                    if idx % 5000 == 0:
+                        logger.info(f'Go through {idx} users')
             except Exception as e:
                 logger.error(e)
                 sleep(15*60)
@@ -84,7 +86,7 @@ def scrape_profile():
         res.raise_for_status()
 
 @manager.command
-def scrape_following():
+def scrape_friend_list():
     """
     Scrape following relationships.
     Additionaly get profile of the users.
