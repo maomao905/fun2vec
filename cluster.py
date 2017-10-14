@@ -18,37 +18,53 @@ config = load_config('file')
 FILE_FUN2VEC = 'data/fun.model'
 FILE_KMEANS = 'data/kmeans_fun.pkl'
 
-def get_embeddings(model):
-    V = model.wv.index2word
-    embeddings = np.zeros((len(V), model.vector_size))
-
-    for index, word in enumerate(V):
-        embeddings[index, :] += model[word]
-    return embeddings
-
 def cluster_funs_by_kmeans(K):
     """
     興味で同じような興味は塊が多すぎて、同じような興味が出てくるのでそれを防ぐため、clusteringする
     current vocab_size => len(model.wv.vocab) 23402
     """
-    model = load_model('fun2vec')
-    embeddings = get_embeddings(model)
+    embeddings = load_model('word2vec').wv.syn0norm
     clf = MiniBatchKMeans(n_clusters=K, batch_size=500, init_size=10000, random_state=0)
     clf.fit(embeddings)
     save(clf, FILE_KMEANS)
-    # km = KMeans(n_clusters=1000
-    # )
+
+def cluster_hierarchical():
+    """
+    metric choices
+    ref : https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html
+    """
+    model = load_model('word2vec').wv
+    from  scipy.spatial.distance  import pdist
+    from scipy.cluster.hierarchy import linkage, dendrogram
+    from matplotlib import pyplot as plt
+
+    TEST_NUM = 100
+
+    l = linkage(model.syn0norm[:TEST_NUM], method='complete', metric='cosine')
+
+    # plt.figure(figsize=(25, 10))
+    # plt.title('Hierarchical Clustering Dendrogram')
+    # plt.ylabel('word')
+    # plt.xlabel('distance')
+
+    dendrogram(
+        l,
+        leaf_font_size=8.,  # font size for the x axis labels
+        leaf_label_func=lambda v: str(model.index2word[:TEST_NUM][v])
+    )
+    plt.show()
 
 def check(words):
     clf = joblib.load(FILE_KMEANS)
-    model = load_model('fun2vec')
-    # for w in words:
-    #     idx = result[model.wv.vocab[w].index]
-    #     print(w, model.wv.index2word[idx])
+    model = load_model('word2vec').wv
     X = [model[word] for word in words]
-    res = clf.predict(X)
-    for w, center_id in zip(words, res):
-        print(w, model.wv.index2word[center_id])
+    centroids = clf.predict(X)
+    for w, centroid in zip(words, centroids):
+        group_indices = np.argwhere(clf.labels_ == centroid)
+        group_words = [model.index2word[idx] for idx in group_indices.flatten()]
+        print('-' * 100)
+        print(f'{w}と同じクラスタにいるワードは')
+        print(group_words)
 
 def save(clf, file_path):
     joblib.dump(clf, file_path, compress=True)
@@ -145,4 +161,6 @@ def find_topic():
 
 if __name__ == '__main__':
     from pprint import pprint
-    find_topic()
+    # cluster_funs_by_kmeans(300)
+    check(['将棋', 'サッカー', '野球', 'ロッテ'])
+    # cluster_hierarchical()
