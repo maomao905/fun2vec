@@ -16,6 +16,14 @@ logger = logging.getLogger(__name__)
 
 config = load_config('file')
 
+"""
+Knowledge of Gensim
+・model.wv.syn0normとmodel.wv.index2wordは対応関係にある
+・model.wv.vocab['アニメ'].index -> index取得
+・複数単語のベクトルをまとめて取得するときはmodel.wv[['アニメ', 'オタク']]
+・model.wv.index2word[0] -> 'アニメ' 単語取得
+"""
+
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
 def create_word2vec():
