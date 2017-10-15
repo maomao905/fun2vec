@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 REGEX_JA = re.compile(r'[ぁ-んァ-ン一-龥]')
 REGEX_EN = re.compile(r'[a-z]+', re.IGNORECASE)
-REGEX_STOP_CHAR = re.compile(r'^([ァ-ン一-龥]|[ぁ-ん]{1,2}|[a-z]+)$', re.IGNORECASE)
+REGEX_STOP_CHAR = re.compile(r'^([ァ-ン]|[ぁ-ん]{1,2}|)$', re.IGNORECASE)
 
 UNKNOWN_MARK = '*'
 
@@ -20,7 +20,7 @@ def extract_words(sentence):
     """
     日本語で名詞 or 形容詞を取得
     """
-    tagger = MeCab.Tagger('--dicdir={} --userdic={}'.format('/usr/local/lib/mecab/dic/mecab-ipadic-neologd', 'data/original_dict.dic'))
+    tagger = MeCab.Tagger('--dicdir={} --userdic={}'.format(config['mecab']['dicdir'], config['mecab']['userdic']))
     tagger.parse('')
     node = tagger.parseToNode(sentence)
     words = []
