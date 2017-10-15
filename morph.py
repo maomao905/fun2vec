@@ -44,18 +44,6 @@ def valid_genkei(genkei, stop_words):
     return (not bool(REGEX_STOP_CHAR.match(genkei)) and genkei != UNKNOWN_MARK \
         and genkei not in stop_words)
 
-def check_ja(text):
-    """
-    日本語かを判定
-    """
-    return bool(REGEX_JA.match(text))
-
-def check_en(text):
-    """
-    英語かを判定
-    """
-    return bool(REGEX_EN.search(text))
-
 def filter_feature(features):
     if features[0] == '名詞' and features[1] in ['一般', 'サ変接続', '固有名詞']:
         if features[2] == '地域':
