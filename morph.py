@@ -9,18 +9,18 @@ logger = logging.getLogger(__name__)
 
 REGEX_JA = re.compile(r'[ぁ-んァ-ン一-龥]')
 REGEX_EN = re.compile(r'[a-z]+', re.IGNORECASE)
-REGEX_STOP_CHAR = re.compile(r'^([ァ-ン]|[ぁ-ん]{1,2}|)$', re.IGNORECASE)
+REGEX_STOP_CHAR = re.compile(r'^([ァ-ン]|[ぁ-ん]{1,2})$', re.IGNORECASE)
 
 UNKNOWN_MARK = '*'
 
-config = load_config('file')
-STOP_WORDS = pd.read_csv(config['stop_words'], header=None).values.flatten().tolist()
+config_mecab = load_config('file')['mecab']
+STOP_WORDS = pd.read_csv(config_mecab['stop_words'], header=None).values.flatten().tolist()
 
 def extract_words(sentence):
     """
     日本語で名詞 or 形容詞を取得
     """
-    tagger = MeCab.Tagger('--dicdir={} --userdic={}'.format(config['mecab']['dicdir'], config['mecab']['userdic']))
+    tagger = MeCab.Tagger('--dicdir={} --userdic={}'.format(config_mecab['dicdir'], config_mecab['userdic']))
     tagger.parse('')
     node = tagger.parseToNode(sentence)
     words = []
@@ -58,7 +58,7 @@ def check_en(text):
 
 def filter_feature(features):
     if features[0] == '名詞' and features[1] in ['一般', 'サ変接続', '固有名詞']:
-        if features[2] in ['地域']:
+        if features[2] == '地域':
             return False
         return True
     else:
