@@ -3,9 +3,9 @@ import re
 PTN_DIGIT_ALL = r'[〇-九\d]'
 
 REGEX_REPLACE = (
-    (re.compile(r'(高校|高等学校)$'), '高校生'),
-    (re.compile(r'(中学|中学校)$'), '中学生'),
-    (re.compile(r'大学$'), '大学生'),
+    (re.compile(r'(高校|高等学校)$'), '高校'),
+    (re.compile(r'(中学|中学校)$'), '中学'),
+    (re.compile(r'大学$'), '大学'),
     (re.compile('新聞'), '新聞'),
     (re.compile('JR'), 'JR'),
     (re.compile('受験'), '受験'),
