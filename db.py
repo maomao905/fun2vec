@@ -21,6 +21,8 @@ class User(Base):
     """
     __tablename__ = 'users'
     id                    = Column(BigInteger, primary_key=True, autoincrement=False, comment='twitter unique id')
+    word2vec_corpus_id    = Column(BigInteger, nullable=True, comment='word2vec corpus list index')
+    fun2vec_corpus_id     = Column(BigInteger, nullable=True, comment='fun2vec corpus list index')
     screen_name           = Column(String(100), nullable=False, comment='screen_names are unique but subject to change')
     description           = Column(Text, nullable=False, comment='profile description')
     default_profile_image = Column(Boolean, nullable=True, comment='When true, the user has not uploaded their own image')
