@@ -82,12 +82,12 @@ def scrape_user():
                     # save users in DB
                     for user_info in _extract_user_info(info):
                         user = _filter_user(session, user_info)
-                        if user and user not in new_users:
+                        if user and user.id not in new_users:
                             new_users.update({user.id: user})
                     if len(new_users) >= 100:
                         _save_users(session, list(new_users.values()))
                         new_users = {}
-                    if idx % 1000 == 0:
+                    if idx % 5000 == 0:
                         logger.info(f'Go through {idx} users')
             except Exception as e:
                 logger.error(e)
