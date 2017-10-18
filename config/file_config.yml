@@ -1,5 +1,5 @@
 word2vec:
-    corpus: data/word2vec_corpus.pkl.gz
+    corpus: data/word2vec_corpus.2017-10-15.pkl.gz
     model:  data/word2vec.model.gz
 fun2vec:
     corpus: data/fun2vec_corpus.pkl.gz
@@ -11,5 +11,5 @@ fun2vec_clustered:
 topic_model: data/topic_model.model.gz
 mecab:
     dicdir:  /usr/local/lib/mecab/dic/mecab-ipadic-neologd
-    userdic: data/dictionary/original_dict.dic
+    userdic: data/dictionary/original_dic.dic
     stop_words: data/dictionary/stop_words.csv
