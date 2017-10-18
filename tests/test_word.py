@@ -1,6 +1,6 @@
-from clean_word import clean
-class TestCleanWord(object):
-    def test_clean(self):
+from word import clean_word
+class TestWord(object):
+    def test_clean_word(self):
         test_cases_replace = (
             ('ラ・サール高校', '高校'),
             ('ラ・サール高校生', 'ラ・サール高校生'),
@@ -27,7 +27,7 @@ class TestCleanWord(object):
         )
 
         for word, rep_word in test_cases_replace:
-            assert clean(word) == rep_word
+            assert clean_word(word) == rep_word
 
         for word in test_cases_exclude:
-            assert clean(word) == None
+            assert clean_word(word) == None
