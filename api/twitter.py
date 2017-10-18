@@ -23,7 +23,7 @@ def _extract_user_info(info):
     retweet_user_info = {k: v for k, v in info.get('retweeted_status', {}).get('user', {}).items() if k in COLUMNS}
     return user_info, retweet_user_info
 
-def _save_user_info(session, user_info):
+def _filter_user(session, user_info):
     """
     プロフィールが存在し、公式アカウントではないもので
     id(primary_key)がDBになければ保存
@@ -31,8 +31,14 @@ def _save_user_info(session, user_info):
     if user_info and user_info['description'] and user_info['verified'] == 0:
         if session.query(User).filter_by(id=user_info['id']).count() == 0:
             user = User(**user_info)
-            session.add(user)
-            session.commit()
+            return user
+
+def _save_users(session, users):
+    """
+    users: list of User object
+    """
+    session.bulk_save_objects(users)
+    session.commit()
 
 def _get_auth():
     """
@@ -64,18 +70,24 @@ def scrape_user():
         auth=_get_auth(),
         stream=True,
         params=params,
-        timeout=30
+        timeout=300,
     )
     if res.ok:
         session = create_session()
+        new_users = {}
         for idx, line in enumerate(res.iter_lines(), 1):
             try:
                 if line:
                     info = json.loads(line.decode('utf-8'))
                     # save users in DB
                     for user_info in _extract_user_info(info):
-                        _save_user_info(session, user_info)
-                    if idx % 5000 == 0:
+                        user = _filter_user(session, user_info)
+                        if user and user not in new_users:
+                            new_users.update({user.id: user})
+                    if len(new_users) >= 100:
+                        _save_users(session, list(new_users.values()))
+                        new_users = {}
+                    if idx % 1000 == 0:
                         logger.info(f'Go through {idx} users')
             except Exception as e:
                 logger.error(e)
