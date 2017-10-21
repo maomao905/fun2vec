@@ -33,11 +33,17 @@ def _filter_user(session, user_info):
             user = User(**user_info)
             return user
 
-def _save_users(session, users):
+def _save_users(session, store_users):
     """
     users: list of User object
     """
-    session.bulk_save_objects(users)
+    res = session.query(User.id).filter(User.id.in_(list(store_users.keys()))).all()
+    exist_users = [r[0] for r in res]
+    new_users = []
+    for user_id, user_info in store_users.items():
+        if user_id not in exist_users and User.valid(user_info):
+            new_users.append(User(**user_info))
+    session.bulk_save_objects(new_users)
     session.commit()
 
 def _get_auth():
@@ -74,19 +80,18 @@ def scrape_user():
     )
     if res.ok:
         session = create_session()
-        new_users = {}
+        store_users = {}
         for idx, line in enumerate(res.iter_lines(), 1):
             try:
                 if line:
                     info = json.loads(line.decode('utf-8'))
                     # save users in DB
                     for user_info in _extract_user_info(info):
-                        user = _filter_user(session, user_info)
-                        if user and user.id not in new_users:
-                            new_users.update({user.id: user})
-                    if len(new_users) >= 100:
-                        _save_users(session, list(new_users.values()))
-                        new_users = {}
+                        if user_info and user_info['id'] not in store_users:
+                            store_users.update({user_info['id']: user_info})
+                    if len(store_users) >= 200:
+                        _save_users(session, store_users)
+                        store_users = {}
                     if idx % 5000 == 0:
                         logger.info(f'Go through {idx} users')
             except Exception as e:
