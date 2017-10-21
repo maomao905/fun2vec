@@ -5,11 +5,14 @@ from sqlalchemy import Column, BigInteger, Integer, String, Text, Boolean, DateT
 from sqlalchemy.orm import sessionmaker
 from flask_script import Manager, prompt_bool
 from datetime import datetime
+import re
 
 db_secret = read_secrets('mysql')
 db_url = 'mysql+pymysql://{user}:{password}@localhost/{db_name}?charset=utf8mb4&local_infile=1'.format(**db_secret)
 engine = create_engine(db_url)
 Base = declarative_base()
+
+REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
 
 def create_session():
     Session = sessionmaker(bind=engine)
@@ -50,6 +53,16 @@ class User(Base):
     def __repr__(self):
         return '<User id={id} screen_name={screen_name} description={description}>'.format(
                 id=self.id, screen_name=self.screen_name, description=self.description)
+
+    @classmethod
+    def valid(cls, user):
+        if user['verified'] == 1:
+            return False
+        if user['description'] is None or len(user['description']) <= 10:
+            return False
+        if REGEX_INVALID.search(user['description']):
+            return False
+        return True
 
 class Friend(Base):
     """
