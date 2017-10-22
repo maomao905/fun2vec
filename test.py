@@ -1,6 +1,15 @@
-def fact(n):
-    if n == 0: return 1
-    return n * fact(n - 1)
+def test():
+    print('start')
+    while True:
+        try:
+            raise
+        except Exception as e:
+            print('exception')
+            break
+        finally:
+            print('finally')
+
+    print('end')
 
 if __name__ == '__main__':
-    print(fact(6))
+    test()

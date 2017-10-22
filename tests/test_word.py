@@ -16,6 +16,10 @@ class TestWord(object):
             '２日目',
             '三日目',
             '1年生',
+            '2013年',
+            '1984年生まれ',
+            '6月',
+            '4人',
             '鹿児島出身',
             '鹿児島県',
             '58キロ',
@@ -24,6 +28,7 @@ class TestWord(object):
             '要注意',
             '1万円',
             '０円',
+            '2期生',
         )
 
         for word, rep_word in test_cases_replace:

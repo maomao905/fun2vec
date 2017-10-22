@@ -14,16 +14,17 @@ REGEX_REPLACE = (
 )
 
 REGEX_EXCLUDE = (
-    re.compile(r'^{}日目?$'.format(PTN_DIGIT_ALL)),
-    re.compile(r'^{}年生?$'.format(PTN_DIGIT_ALL)),
-    re.compile(r'出身$'),
-    re.compile(r'県$'),
+    re.compile(r'^{}+日目?$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'^{}+年(生|生まれ)?$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'^{}+期生$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'^{}+(月|人|歳|才|児)$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'^{}+万?円?$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'^{}+(戦|敗|勝|度)$'.format(PTN_DIGIT_ALL)),
+    re.compile(r'(出身|県)$'),
     re.compile(r'キロ$'),
     re.compile('ごめん'),
     re.compile('決定'),
     re.compile('注意'),
-    re.compile(r'^{}+万?円?$'.format(PTN_DIGIT_ALL)),
-    re.compile(r'^{}+(戦|敗|勝|度)$'.format(PTN_DIGIT_ALL)),
 )
 
 def clean_word(word):
@@ -34,8 +35,6 @@ def clean_word(word):
 
     for regex in REGEX_EXCLUDE:
         if regex.search(word):
-            if word == '中日':
-                print(regex)
             word = None
             break
 
