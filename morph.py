@@ -1,6 +1,7 @@
 import MeCab
 import re
 import logging
+from word import clean_word
 from util import load_config
 import pandas as pd
 
@@ -14,7 +15,8 @@ REGEX_STOP_CHAR = re.compile(r'^([ァ-ン]|[ぁ-ん]{1,2})$', re.IGNORECASE)
 UNKNOWN_MARK = '*'
 
 config_mecab = load_config('file')['mecab']
-STOP_WORDS = pd.read_csv(config_mecab['stop_words'], header=None).values.flatten().tolist()
+
+STOP_WORDS = pd.read_csv(config_mecab['stop_words'], header=None).drop_duplicates().values.flatten().tolist()
 
 def extract_words(sentence):
     """
@@ -26,27 +28,25 @@ def extract_words(sentence):
     words = []
     while node:
         if node.surface != '':
-            # 品詞
-            features = node.feature.split(',')
-            if filter_feature(features):
-                genkei = features[6]
-
-                if valid_genkei(genkei, STOP_WORDS):
-                    words.append(genkei)
+            pos1, pos2, pos3, _, _, _, lexeme  = node.feature.split(',')[:7]
+            if filter_pos(pos1, pos2, pos3) and valid_lexeme(lexeme, STOP_WORDS):
+                word = clean_word(lexeme)
+                if word:
+                    words.append(word)
         node = node.next
     return words
 
-def valid_genkei(genkei, stop_words):
+def valid_lexeme(lexeme, stop_words):
     """
     原型をチェック
     英語・カタカナ１文字だけ、ひらがな１文字or２文字は省く
     """
-    return (not bool(REGEX_STOP_CHAR.match(genkei)) and genkei != UNKNOWN_MARK \
-        and genkei not in stop_words)
+    return (not bool(REGEX_STOP_CHAR.match(lexeme)) and lexeme != UNKNOWN_MARK \
+        and lexeme not in stop_words)
 
-def filter_feature(features):
-    if features[0] == '名詞' and features[1] in ['一般', 'サ変接続', '固有名詞']:
-        if features[2] == '地域':
+def filter_pos(pos1, pos2, pos3):
+    if pos1 == '名詞' and pos2 in ['一般', 'サ変接続', '固有名詞']:
+        if pos3 == '地域':
             return False
         return True
     else:
@@ -83,7 +83,3 @@ def find_close_words():
             df[df.word == row.replace_word].replace_word.values[0])
     df.drop_duplicates(subset=['replace_word', 'word'], inplace=True)
     df.to_csv('data/close_word.tsv', index=False)
-
-if __name__ == '__main__':
-    create_original_dictionary()
-    # replace_morph('寿司', 'お寿司')
