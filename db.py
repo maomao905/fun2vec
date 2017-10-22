@@ -12,8 +12,6 @@ db_url = 'mysql+pymysql://{user}:{password}@localhost/{db_name}?charset=utf8mb4&
 engine = create_engine(db_url)
 Base = declarative_base()
 
-REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
-
 def create_session():
     Session = sessionmaker(bind=engine)
     return Session()
@@ -59,8 +57,6 @@ class User(Base):
         if user['verified'] == 1:
             return False
         if user['description'] is None or len(user['description']) <= 10:
-            return False
-        if REGEX_INVALID.search(user['description']):
             return False
         return True
 

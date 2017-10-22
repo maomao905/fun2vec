@@ -32,7 +32,6 @@ REGEX_SEP_FUNS = re.compile(r'({char}(?P<sep>とか|やら|、|,\s?|，|\s?/\s?|
 # REGEX_INTEREST_FOLLOW = re.compile(r'興味(は|：|:|→|⇒|\=|が?(有|あ)る(事|こと|も?の)は)\s?(?P<fun>{char})'.format(char=REGEX_CHAR))
 REGEX_AND_FUN = re.compile(r'((%s(?P<sep>とか?)){3,}%s)' % (REGEX_CHAR, REGEX_CHAR))
 REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
-REGEX_INVALID = re.compile(r'公式|宣伝|bot|ボット', re.IGNORECASE)
 
 def _get_best_profile():
     """
@@ -45,9 +44,6 @@ def _get_best_profile():
     user_funs = []
     for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(500), 1):
         profile = _user.description
-        # 公式アカウント・Botなどは除外
-        if _invalid_profile(profile):
-            continue
 
         funs = []
         # url置き換え
@@ -140,7 +136,7 @@ def _replace_url(text):
     return text
 
 def _invalid_profile(text):
-    return bool(REGEX_INVALID.search(text))
+    return len(text) <= 10
 
 def extend_funs(user_funs):
     """

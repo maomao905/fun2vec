@@ -23,16 +23,6 @@ def _extract_user_info(info):
     retweet_user_info = {k: v for k, v in info.get('retweeted_status', {}).get('user', {}).items() if k in COLUMNS}
     return user_info, retweet_user_info
 
-def _filter_user(session, user_info):
-    """
-    プロフィールが存在し、公式アカウントではないもので
-    id(primary_key)がDBになければ保存
-    """
-    if user_info and user_info['description'] and user_info['verified'] == 0:
-        if session.query(User).filter_by(id=user_info['id']).count() == 0:
-            user = User(**user_info)
-            return user
-
 def _save_users(session, store_users):
     """
     users: list of User object
