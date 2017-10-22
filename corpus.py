@@ -1,3 +1,4 @@
+import os
 from db import create_session, User
 from util import read_sql, load_config
 from morph import extract_words
@@ -168,28 +169,49 @@ def extend_funs(user_funs):
 manager = Manager(usage='Perform corpus operations')
 @manager.command
 def create_word2vec_corpus():
-    corpus = []
+    def __save_word2vec_corpus_id(_user, corpus_id):
+        _user.word2vec_corpus_id = corpus_id
+        session.commit()
+
+    corpus = get_corpus(config['word2vec']['corpus'])
     session = create_session()
     logger.info('Running query and Extracting words...')
-    for idx, _user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(500), 1):
-        profile = _user.description
-        # 公式アカウント・Botなどは除外
-        if _invalid_profile(profile):
-            continue
-        # url置き換え
-        profile = _replace_url(profile)
-        # 単語取得
-        words = extract_words(profile)
-        # 単語が２つ以上の場合だけ
-        if len(words) >= 2:
-            corpus.append(words)
+    try:
+        for idx, user in enumerate(session.query(User)\
+            .filter(User.word2vec_corpus_id == None, User.verified==0)\
+            .yield_per(500), len(corpus)):
+            profile = user.description
+            # url置き換え
+            profile = _replace_url(profile)
+            # 単語取得
+            words = extract_words(profile)
+            # 単語が２つ以上の場合だけ
+            if len(words) >= 2:
+                corpus.append(words)
+                __save_word2vec_corpus_id(user, len(corpus)-1)
+            else:
+                __save_word2vec_corpus_id(user, -1)
 
-        if idx % 10000 == 0:
-            logger.info('Finished {} profiles'.format(idx))
+            if idx % 1000 == 0:
+                logger.info(f'Finished {idx} profiles')
+                if idx > 5000:
+                    print(f'last profile is {profile}')
+                    break
+    except Exception as e:
+        logger.error(e)
+    finally:
+        session.close()
+        with gzip.open(config['word2vec']['corpus'], 'wb') as f:
+            pickle.dump(corpus, f)
+        print(f'last corpus (idx: {len(corpus)-1}) is {corpus[-1]}')
+        logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
 
-    with gzip.open(config['word2vec']['corpus'], 'wb') as f:
-        pickle.dump(corpus, f)
-    logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
+def get_corpus(file_name):
+    corpus = []
+    if os.path.exists(file_name):
+        with gzip.open(file_name, 'rb') as f:
+            corpus = pickle.load(f)
+    return corpus
 
 @manager.command
 def create_fun2vec_dictionary():
