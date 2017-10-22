@@ -77,10 +77,10 @@ $ pip install -r requirements.txt
 ```bash
 $ /usr/local/Cellar/mecab/0.996/libexec/mecab/mecab-dict-index \
 -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd \
--u data/original_dict.dic \
+-u data/dictionary/original_dic.dic \
 -f utf-8 \
 -t utf-8 \
-data/original_dict.csv
+data/dictionary/original_dic.csv
 ```
 
 ### 秘密情報のパスワード  
