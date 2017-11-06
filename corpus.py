@@ -1,7 +1,7 @@
 import os
 from db import create_session, User
 from util import read_sql, load_config
-from morph import extract_words
+from word import Word
 import re
 from itertools import combinations
 from collections import defaultdict, Counter
@@ -169,52 +169,30 @@ def extend_funs(user_funs):
 manager = Manager(usage='Perform corpus operations')
 @manager.command
 def create_word2vec_corpus():
-    corpus = get_corpus(config['word2vec']['corpus'])
+    corpus = []
+    w = Word()
     session = create_session()
     logger.info('Running query and Extracting words...')
-    while True:
-        store_users = []
-        store_corpus = []
-        users = session.query(User)\
-            .filter(User.word2vec_corpus_id == None, User.verified==0)\
-            .limit(500)
-        if users.count() == 0:
-            session.close()
-            break
-
-        for idx, user in enumerate(users, len(corpus)):
+    try:
+        for idx, user in enumerate(session.query(User.description).filter(User.verified==0).yield_per(500), 1):
             profile = user.description
             # url置き換え
             profile = _replace_url(profile)
             # 単語取得
-            words = extract_words(profile)
-            store_corpus.append(words)
-
+            words = w.preprocess(profile)
             if len(words) >= 2:
-                user.word2vec_corpus_id = idx
-            else:
-                user.word2vec_corpus_id = -1
+                corpus.append(words)
 
-            store_users.append(user)
+            if idx % 10000 == 0:
+                logger.info(f'Finished {idx} profiles')
 
-        import ipdb; ipdb.set_trace()
-
-        try:
-            assert len(store_users) == len(store_corpus),\
-                f'The length (users: {len(store_users)}, corpus: {len(store_corpus)}) is not correct'
-            # session.bulk_save_objects(store_users)
-            corpus.append(store_corpus)
-            print(f'last corpus (idx: {len(corpus)-1}) is {corpus[-1]}')
-            print(f'last user is {store_users[-1]}')
-            logger.info('Saved corpus of {} sentences in {}'.format(len(corpus), config['word2vec']['corpus']))
-        except Exception as e:
-            session.rollback()
-            logger.error(e)
-            break
-        finally:
-            # with gzip.open(config['word2vec']['corpus'], 'wb') as f:
-            #     pickle.dump(corpus, f)
-            session.close()
+        with gzip.open(config['word2vec']['corpus'], 'wb') as f:
+            pickle.dump(corpus, f)
+        logger.info(f"Saved corpus of {len(corpus)} sentences in {config['word2vec']['corpus']}")
+    except Exception as e:
+        logger.error(e)
+    finally:
+        session.close()
 
 def get_corpus(file_name):
     corpus = []
