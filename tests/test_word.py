@@ -1,9 +1,9 @@
-from word import clean_word
+from word import Word
+from util import load_config
+
 class TestWord(object):
     def test_clean_word(self):
         test_cases_replace = (
-            ('ラ・サール高校', '高校'),
-            ('ラ・サール高校生', 'ラ・サール高校生'),
             ('慶応大学', '大学'),
             ('朝日新聞', '新聞'),
             ('JR東日本', 'JR'),
@@ -24,15 +24,39 @@ class TestWord(object):
             '鹿児島県',
             '58キロ',
             'ごめんなさい。',
-            '決定事項',
             '要注意',
             '1万円',
             '０円',
             '2期生',
         )
 
+        w = Word()
         for word, rep_word in test_cases_replace:
-            assert clean_word(word) == rep_word
+            assert w.preprocess(word)[0] == rep_word
 
         for word in test_cases_exclude:
-            assert clean_word(word) == None
+            assert len(w.preprocess(word)) == 0
+
+    def test_stop_words(self):
+        file_config = load_config('file')
+        with open(file_config['word']['stop_words']) as f:
+            stop_words = frozenset(f.read().rstrip().split('\n'))
+
+        w = Word()
+        for word in stop_words:
+            assert len(w.preprocess(word)) == 0
+
+    def test_valid(self):
+        test_cases = (
+            # filter pos
+            ('沖縄', []),
+            ('走る', []),
+            # valid lexeme
+            ('あれ', []),
+            ('コメ', ['コメ']),
+            ('Web', ['Web']),
+        )
+
+        w = Word()
+        for word, rep_word in test_cases:
+            assert w.preprocess(word) == rep_word
