@@ -16,6 +16,61 @@ def load_config(name):
 logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
 
+# class FrozenStructMixin:
+#     __slots__ = ('_data',)
+#     def __init_subclass__(cls, **kwargs):
+#         fields = kwargs['fields']
+#         cls.FIELDS = tuple(fields)
+#         for i, field in enumerate(fields):
+#             setattr(cls, field, property(fget=partial(lambda idx, self: self._data[idx], i)))
+#
+#     def __new__(cls, *args, **kwargs):
+#         super_kwargs = {k: v for k, v in kwargs.items() if k not in cls.FIELDS}
+#         return super().__new__(cls, *args, **super_kwargs)
+#
+#     def __init__(self, *args, **kwargs):
+#         super_kwargs = {k: v for k, v in kwargs.items() if k not in self.FIELDS}
+#         super().__init__(*args, **super_kwargs)
+#         if hasattr(self, '_data'):
+#             return
+#         self._data = tuple(kwargs.get(f) for f in self.FIELDS)
+#
+#     def __repr__(self):
+#         keyvals = ','.join(f'{f}={v}' for f, v in zip(self.FIEDLS, self._data))
+#         return f'{self.__class__.__name__}({keyvals})'
+
+def find_close_words():
+    import difflib
+    import pandas as pd
+    from fun2vec import load_model
+    result = []
+    model = load_model('word2vec').wv
+    model_fun2vec = load_model('fun2vec').wv
+    logger.info('Find close words...')
+    vocab = model.index2word
+    for idx, word in enumerate(model_fun2vec.index2word, 1):
+        close_words = difflib.get_close_matches(word, vocab)
+        if len(close_words) >= 2:
+            close_words = close_words[1:]
+            for close_word in close_words:
+                try:
+                    sim = model.similarity(word, close_word)
+                    if sim > 0.6:
+                        if model.vocab[word].count > model.vocab[close_word].count:
+                            result.append([word, close_word, sim])
+                        else:
+                            result.append([close_word, word, sim])
+                except KeyError:
+                    pass
+        if idx % 1000 == 0:
+            logger.info('{} Finished'.format(idx))
+    df = pd.DataFrame(result, columns=['replace_word', 'word', 'similarity'])
+    for row in df[df.replace_word.isin(df.word)].itertuples():
+        df.set_value(df[df.replace_word == row.replace_word].index[0], 'replace_word',\
+            df[df.word == row.replace_word].replace_word.values[0])
+    df.drop_duplicates(subset=['replace_word', 'word'], inplace=True)
+    df.to_csv('data/close_word.tsv', index=False)
+
 def read_sql(file_path):
     with open(file_path, 'r') as f:
         sql = f.read()
