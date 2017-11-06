@@ -4,6 +4,7 @@ import os
 import logging
 from util import load_config
 from flask_script import Manager
+from morpheme import WordParser
 
 """
 Create original dictionary
@@ -30,8 +31,14 @@ def create_original_dictionary():
     res = []
 
     df_new_word = pd.read_csv(FILE_NEW_WORD)
-    for row in df_new_word.itertuples():
-        morph = create_morph(row.surface, row.lexical, row.speech)
+    df_new_word = df_new_word.assign(
+        cost=lambda df: df.cost.fillna(1).astype(int),
+        pos1=lambda df: df.pos1.fillna('名詞'),
+        pos2=lambda df: df.pos2.fillna('固有名詞'),
+        pos3=lambda df: df.pos3.fillna('一般'),
+    )
+    for _, row in df_new_word.iterrows():
+        morph = create_morph(**row.to_dict())
         if morph:
             res.append(morph + '\n')
 
@@ -41,17 +48,20 @@ def create_original_dictionary():
     compile_dictionary()
     logger.info('New words added to dictionary')
 
-    df_close_word = pd.read_csv(FILE_CLOSE_WORD)
-    for row in df_close_word.itertuples():
-        morph = replace_morph(row.word, row.replace_word)
-        if morph:
-            res.append(morph + '\n')
+    file_config = load_config('file')
+    __NODE = {
+        'keys':         ('features', 'cost'),
+        'node-format':  ('%H',       '%pw'),
+        'unk-format':   ('%H',       '%pw'),
+    }
+    parser = WordParser(**file_config['mecab'], node=__NODE)
 
-    df_close_word_original = pd.read_csv(FILE_CLOSE_WORD_ORIGINAL)
-    for row in df_close_word_original.itertuples():
-        morph = replace_morph(row.word, row.replace_word)
-        if morph:
-            res.append(morph + '\n')
+    for file_path in (FILE_CLOSE_WORD, FILE_CLOSE_WORD_ORIGINAL):
+        df_close_word = pd.read_csv(file_path)
+        for row in df_close_word.itertuples():
+            morph = replace_morph(parser, row.word, row.replace_word)
+            if morph:
+                res.append(morph + '\n')
 
     with open(FILE_OUTPUT, 'w') as f:
         f.writelines(res)
@@ -59,28 +69,27 @@ def create_original_dictionary():
     compile_dictionary()
     logger.info(f'Original dictionary compiled!')
 
-def create_morph(surface, lexical, speech):
-        return f'{surface},,,1,名詞,固有名詞,一般,*,*,*,{lexical},{speech},{speech}'
+def create_morph(**kwargs):
+    return '{surface},,,{cost},{pos1},{pos2},{pos3},*,*,*,{lexeme},{speech},{speech}'.format_map(kwargs)
 
-def replace_morph(word, replace_word):
+def replace_morph(parser, word, replace_word):
     if word != word or word == replace_word:
         return
-    tagger = MeCab.Tagger(f"--dicdir={file_config['mecab']['dicdir']} --userdic={file_config['mecab']['userdic']}")
-    tagger.parse('')
-    node = tagger.parseToNode(word)
-    while node:
-        if node.surface:
-            features = node.feature.split(',')
-            features[6] = replace_word
-        node = node.next
-    return f'{word},,,1,' + ','.join(features)
+    morphs = parser(word)
+    assert len(morphs) == 1, f'{word} is splited into more than one word'
+    morph = morphs[0]
+    features = morph.features.split(',')
+    features[6] = replace_word
+    # substract 100 from the original cost
+    cost = int(morph.cost) - 100
+    return f'{word},,,{cost},' + ','.join(features)
 
 def compile_dictionary():
     import subprocess
     import sys
     command = f"/usr/local/Cellar/mecab/0.996/libexec/mecab/mecab-dict-index \
     -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd \
-    -u {file_config['mecab']['userdic']} \
+    -u {file_config['mecab']['userdics'][0]} \
     -f utf-8 \
     -t utf-8 \
     data/dictionary/original_dic.csv"
@@ -101,6 +110,3 @@ def cut():
 
     df_res = pd.DataFrame(res, columns=df_close_word.columns).sort_values(by='similarity')
     df_res.to_csv(FILE_TEMP_OUTPUT, index=False)
-
-if __name__ == '__main__':
-    create_original_dictionary()
