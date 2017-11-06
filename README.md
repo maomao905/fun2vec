@@ -12,7 +12,7 @@
 0. 辞書構築 [new_word.tsv](data/new_word.tsv) + [close_word.tsv](data/close_word.tsv) + [close_word_original.tsv](data/close_word_original.tsv) を使って独自辞書を作成
 1. 形態素解析 [morph.py](morph.py)
 2. 単語を正規化 [clean_word.py](clean_word.py)
-3. ストップワードは無視 [stop_words.csv](data/stop_words.csv)
+3. ストップワードは無視 [stop_words.txt](data/stop_words.txt)
 
 ### close word作り方
 - 並列なものだけにする。  
