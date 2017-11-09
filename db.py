@@ -22,10 +22,9 @@ class User(Base):
     """
     __tablename__ = 'users'
     id                    = Column(BigInteger, primary_key=True, autoincrement=False, comment='twitter unique id')
-    word2vec_corpus_id    = Column(BigInteger, nullable=True, comment='word2vec corpus list index')
-    fun2vec_corpus_id     = Column(BigInteger, nullable=True, comment='fun2vec corpus list index')
     screen_name           = Column(String(100), nullable=False, comment='screen_names are unique but subject to change')
     description           = Column(Text, nullable=False, comment='profile description')
+    funs                  = Column(Text, nullable=True, comment='funs')
     default_profile_image = Column(Boolean, nullable=True, comment='When true, the user has not uploaded their own image')
     followers_count       = Column(Integer, nullable=True, comment='the number of followers')
     friends_count         = Column(Integer, nullable=True, comment='The number of users the user is following')
@@ -90,3 +89,7 @@ def init_db(table_name=None):
             Base.metadata.tables[table_name].create(bind=engine)
     elif prompt_bool('Are you sure you want to initialized database'):
         Base.metadata.create_all(engine)
+
+def bulk_save(session, objects):
+    session.bulk_save_objects(objects)
+    session.commit()
