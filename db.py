@@ -1,4 +1,4 @@
-from util import read_secrets
+from util import read_secrets, load_config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, BigInteger, Integer, String, Text, Boolean, DateTime
@@ -6,6 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from flask_script import Manager, prompt_bool
 from datetime import datetime
 import re
+import logging
+logging.config.dictConfig(load_config('log'))
+_logger = logging.getLogger(__name__)
 
 db_secret = read_secrets('mysql')
 db_url = 'mysql+pymysql://{user}:{password}@localhost/{db_name}?charset=utf8mb4&local_infile=1'.format(**db_secret)
@@ -24,7 +27,6 @@ class User(Base):
     id                    = Column(BigInteger, primary_key=True, autoincrement=False, comment='twitter unique id')
     screen_name           = Column(String(100), nullable=False, comment='screen_names are unique but subject to change')
     description           = Column(Text, nullable=False, comment='profile description')
-    funs                  = Column(Text, nullable=True, comment='funs')
     default_profile_image = Column(Boolean, nullable=True, comment='When true, the user has not uploaded their own image')
     followers_count       = Column(Integer, nullable=True, comment='the number of followers')
     friends_count         = Column(Integer, nullable=True, comment='The number of users the user is following')
@@ -91,5 +93,9 @@ def init_db(table_name=None):
         Base.metadata.create_all(engine)
 
 def bulk_save(session, objects):
-    session.bulk_save_objects(objects)
-    session.commit()
+    try:
+        session.bulk_save_objects(objects)
+        session.commit()
+    except Exception as e:
+        logging.error(e)
+        session.rollback()

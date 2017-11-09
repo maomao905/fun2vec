@@ -1,6 +1,9 @@
 from corpus.corpus_base import BaseCorpus
-from db import create_session, User
+from db import create_session, User, bulk_save
 import re
+from util import load_config
+from flask_script import Manager
+import logging
 
 class Fun2vecCorpus(BaseCorpus):
     __MAX_WORD_LENGTH = 12
@@ -11,6 +14,11 @@ class Fun2vecCorpus(BaseCorpus):
         .format(char=__REGEX_CHAR), re.IGNORECASE)
     # REGEX_INTEREST_FOLLOW = re.compile(r'興味(は|：|:|→|⇒|\=|が?(有|あ)る(事|こと|も?の)は)\s?(?P<fun>{char})'.format(char=__REGEX_CHAR))
     __REGEX_AND_FUN = re.compile(r'((%s(?P<sep>とか?)){3,}%s)' % (__REGEX_CHAR, __REGEX_CHAR))
+
+    def __init__(self):
+        super().__init__()
+        logging.config.dictConfig(load_config('log'))
+        self._logger = logging.getLogger(__name__)
 
     def extract(self, text):
         """
@@ -88,3 +96,24 @@ class Fun2vecCorpus(BaseCorpus):
                     fun_words.extend(words)
 
         return fun_words
+
+manager = Manager(usage='Perform fun2vec corpus operations')
+@manager.command
+def create_fun2vec_corpus():
+    corpus_with_user_id = {}
+    session = create_session()
+    fc = Fun2vecCorpus()
+    try:
+        for idx, user in enumerate(session.query(User).filter(User.verified==0).yield_per(500), 1):
+            funs = fc.extract(user.description)
+            if len(funs) > 0:
+                corpus_with_user_id[user.id] = '/'.join(funs)
+            if idx % 10000 == 0:
+                fc._logger.info(f'{idx} profiles')
+    except Exception as e:
+        fc._logger.error(e)
+    finally:
+        session.close()
+
+    _pickle(corpus, fc._config_file['fun2vec'])
+    fc._logger.info(f"Saved corpus of {len(corpus)} sentences in {fc._config_file['fun2vec']}")

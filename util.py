@@ -2,6 +2,7 @@ import os
 import json, yaml
 import logging
 import logging.config
+import pickle, gzip
 from flask_script import Manager
 from pygments.lexer import RegexLexer
 import re
@@ -13,8 +14,28 @@ def load_config(name):
         config = yaml.load(f)
         return config
 
+
 logging.config.dictConfig(load_config('log'))
 logger = logging.getLogger(__name__)
+
+def _unpickle(file_name, compress=True):
+    assert os.path.exists(file_name), f'{file_name} does not exist'
+    if compress:
+        with gzip.open(file_name, 'rb') as f:
+            return pickle.load(f)
+    else:
+        with open(file_name, 'rb') as f:
+            return pickle.load(f)
+
+
+def _pickle(objects, file_name, compress=True):
+    assert os.path.exists(file_name), f'{file_name} does not exist'
+    if compress:
+        with gzip.open(file_name, 'wb') as f:
+            pickle.dump(objects, f)
+    else:
+        with open(file_name, 'wb') as f:
+            pickle.dump(objects, f)
 
 # class FrozenStructMixin:
 #     __slots__ = ('_data',)

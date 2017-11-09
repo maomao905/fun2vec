@@ -1,13 +1,12 @@
+corpus:
+  word2vec: data/word2vec_corpus.pkl.gz
+  fun2vec: data/fun2vec_corpus.pkl.gz
+  fun2vec_clustered:: data/fun2vec_clustered_corpus.pkl.gz
 word2vec:
-    corpus: data/word2vec_corpus.pkl.gz
     model:  data/word2vec.model.gz
 fun2vec:
-    corpus: data/fun2vec_corpus.pkl.gz
     model:  data/fun2vec.model.gz
     dictionary: data/fun2vec_dictionary.pkl.gz
-fun2vec_clustered:
-    corpus: data/fun2vec_clustered_corpus.pkl.gz
-    model:  data/fun2vec_clustered.model.gz
 topic_model: data/topic_model.model.gz
 mecab:
     dicdir:  /usr/local/lib/mecab/dic/mecab-ipadic-neologd
