@@ -100,12 +100,12 @@ class Fun2vecCorpus(BaseCorpus):
 
 manager = Manager(usage='Perform fun2vec corpus operations')
 @manager.command
-def create_fun2vec_corpus():
+def create():
     corpus_with_user_id = {}
     session = create_session()
     fc = Fun2vecCorpus()
     try:
-        for idx, user in enumerate(session.query(User).filter(User.verified==0).limit(100).yield_per(500), 1):
+        for idx, user in enumerate(session.query(User).filter(User.verified==0).yield_per(500), 1):
             funs = fc.extract(user.description)
             shuffle(funs)
             corpus_with_user_id[user.id] = set(funs)

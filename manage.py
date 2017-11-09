@@ -13,8 +13,8 @@ manager = Manager(app)
 manager.add_command('db', db_manager)
 manager.add_command('fun2vec', fun2vec_manager)
 manager.add_command('twitter', twitter_manager)
-manager.add_command('corpus', corpus_word2vec_manager)
-manager.add_command('corpus', corpus_fun2vec_manager)
+manager.add_command('word2vec_corpus', corpus_word2vec_manager)
+manager.add_command('fun2vec_corpus', corpus_fun2vec_manager)
 manager.add_command('dictionary', dictionary_manager)
 
 if __name__ == "__main__":

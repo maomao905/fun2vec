@@ -16,7 +16,7 @@ class Word2vecCorpus(BaseCorpus):
 
 manager = Manager(usage='Perform word2vec corpus operations')
 @manager.command
-def create_word2vec_corpus():
+def create():
     corpus = []
     session = create_session()
     wc = Word2vecCorpus()
