@@ -3,7 +3,7 @@ from flask_script import Manager
 from db import manager as db_manager
 from fun2vec import manager as fun2vec_manager
 from api.twitter import manager as twitter_manager
-from corpus import manager as corpus_manager
+from corpus.corpus_base import manager as corpus_manager
 from dictionary import manager as dictionary_manager
 
 app = Flask(__name__)

@@ -84,7 +84,7 @@ class Word():
     def __valid_pos(self, pos):
         poses = pos.split('-')
         try:
-            if poses[0] == '名詞' and poses[1] in ['一般', 'サ変接続', '固有名詞']:
+            if poses[0] == '名詞' and poses[1] in ['一般', '固有名詞', 'サ変接続']:
                 if poses[2] == '地域':
                     return False
                 return True

@@ -9,3 +9,4 @@ data/metadata.tsv
 data/wv.tsv
 .model_test_history
 config/secrets.yml
+test.py

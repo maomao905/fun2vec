@@ -133,3 +133,13 @@ def extend_funs(user_funs):
                 # 対象の興味が存在しなかった場合はスキップ
                 continue
     return fun2id
+
+@manager.command
+def create_fun2vec_dictionary():
+    user_funs = _get_best_profile()
+    logger.info('Extending funs to create dictionary...')
+    dictionary = dict(extend_funs(user_funs))
+
+    # with gzip.open(config['fun2vec']['dictionary'], 'wb') as f:
+    #     pickle.dump(dictionary, f)
+    logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
