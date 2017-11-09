@@ -1,14 +1,15 @@
 from corpus.corpus_base import BaseCorpus
 from db import create_session, User, bulk_save
 import re
-from util import load_config
+from util import load_config, _pickle
 from flask_script import Manager
 import logging
+from random import shuffle
 
 class Fun2vecCorpus(BaseCorpus):
     __MAX_WORD_LENGTH = 12
-    __REGEX_CHAR = '[a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % __MAX_WORD_LENGTH
-    __REGEX_FUN_PREV = re.compile(r'(?P<fun>{char}?)((する)?こと)?(に(興味|はまって)|(を|の?が)趣味|を(こよなく)?愛する|が?(?:大?好き|大好物))'.format(char=__REGEX_CHAR))
+    __REGEX_CHAR = '[1-9a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % __MAX_WORD_LENGTH
+    __REGEX_FUN_PREV = re.compile(r'(?P<fun>{char}?)((する)?こと)?(に(興味|はまって)|(を|の?が)趣味|を(こよなく)?愛する|が?(?:大?好き|大好物|だいすき))'.format(char=__REGEX_CHAR))
     __REGEX_HOBBY_FOLLOW = re.compile(r'趣味(は|で^す|：|:|→|⇒|\=)\s?(?P<fun>{char})'.format(char=__REGEX_CHAR))
     __REGEX_SEP_FUNS = re.compile(r'({char}(?P<sep>とか|やら|、|,\s?|，|\s?/\s?|#|・|\s?／\s?|//|\|)(?:{char}(?P=sep))+{char})' \
         .format(char=__REGEX_CHAR), re.IGNORECASE)
@@ -104,16 +105,15 @@ def create_fun2vec_corpus():
     session = create_session()
     fc = Fun2vecCorpus()
     try:
-        for idx, user in enumerate(session.query(User).filter(User.verified==0).yield_per(500), 1):
+        for idx, user in enumerate(session.query(User).filter(User.verified==0).limit(100).yield_per(500), 1):
             funs = fc.extract(user.description)
-            if len(funs) > 0:
-                corpus_with_user_id[user.id] = '/'.join(funs)
+            shuffle(funs)
+            corpus_with_user_id[user.id] = set(funs)
             if idx % 10000 == 0:
                 fc._logger.info(f'{idx} profiles')
     except Exception as e:
         fc._logger.error(e)
     finally:
         session.close()
-
-    _pickle(corpus, fc._config_file['fun2vec'])
-    fc._logger.info(f"Saved corpus of {len(corpus)} sentences in {fc._config_file['fun2vec']}")
+    _pickle(corpus_with_user_id, fc._config_file['fun2vec'])
+    fc._logger.info(f"Saved corpus of {len(corpus_with_user_id)} sentences in {fc._config_file['fun2vec']}")
