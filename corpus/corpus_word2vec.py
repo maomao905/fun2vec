@@ -2,7 +2,7 @@ from corpus.corpus_base import BaseCorpus
 from db import create_session, User
 
 class Word2vecCorpus(BaseCorpus):
-    def extract_words(self):
+    def extract(self):
         corpus = []
         session = create_session()
         logger.info('Running query and Extracting words...')

@@ -8,30 +8,34 @@ import logging
 import pandas as pd
 from flask_script import Manager
 from cluster import cluster_funs
+from db import create_session, User, bulk_save
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
 config = load_config('file')
+logging.config.dictConfig(load_config('log'))
+_logger = logging.getLogger(__name__)
 
-class BaseaCorpus:
-    __MAX_WORD_LENGTH = 12
-    __REGEX_CHAR = '[a-zぁ-んァ-ヶー一-龠()（）!！-]{1,%d}' % MAX_WORD_LENGTH
+class BaseCorpus:
     __REGEX_URL = re.compile(r'((?:https?|ftp):\/\/[a-z\d\.\-\/\?\(\)\'\*_=%#@"<>!;]+)', re.IGNORECASE)
 
     def __init__(self):
         super().__init__()
-        self.__word = Word()
+        self._word = Word()
         logging.config.dictConfig(load_config('log'))
-        self.logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(__name__)
 
-    @staticmethod
-    def _replace_url(text):
+    def extract(self):
+        raise NotImplementedError()
+
+    @classmethod
+    def _replace_url(cls, text):
         """
-        urlを<URL>に置き換え
+        replace url with <URL>
         """
-        urls = REGEX_URL.findall(text)
+        urls = cls.__REGEX_URL.findall(text)
         for url in urls:
             text = text.replace(url, '<URL>')
 
@@ -48,26 +52,40 @@ class BaseaCorpus:
 manager = Manager(usage='Perform corpus operations')
 @manager.command
 def create_word2vec_corpus():
-    # ALTER TABLE users DROP COLUMN word2vec_corpus_id;
-    # ALTER TABLE users DROP COLUMN fun2vec_corpus_id;
-    w_corpus = Word2vecCorpus()
-    w_corpus.extract()
+    corpus = Word2vecCorpus()
+    corpus.extract()
 
 @manager.command
-def create_fun2vec_dictionary():
-    user_funs = _get_best_profile()
-    logger.info('Extending funs to create dictionary...')
-    dictionary = dict(extend_funs(user_funs))
+def create_fun2vec_corpus():
+    from corpus.corpus_fun2vec import Fun2vecCorpus
+    session = create_session()
+    corpus = Fun2vecCorpus()
+    _logger.info('Running query...')
+    users_with_funs = []
 
-    # with gzip.open(config['fun2vec']['dictionary'], 'wb') as f:
-    #     pickle.dump(dictionary, f)
-    logger.info('Saved dictionary of {} words in {}'.format(len(dictionary), config['fun2vec']['dictionary']))
+    try:
+        for idx, user in enumerate(session.query(User).filter(User.verified==0).yield_per(500), 1):
+            funs = corpus.extract(user.description)
+            # 興味が２つ以上の場合だけ
+            if len(funs) >= 2:
+                user.funs = '/'.join(funs)
+                users_with_funs.append(user)
+
+            if idx % 10000 == 0:
+                bulk_save(session, users_with_funs)
+                users_with_funs = []
+                _logger.info(f'Finished {idx} profiles')
+
+        bulk_save(session, users_with_funs)
+    except Exception as e:
+        session.rollback()
+        _logger.error(e)
+    finally:
+        session.close()
 
 @manager.command
-def create_simple_fun2vec_corpus():
+def write_fun2vec_corpus_to_file():
     # most_similarでextendせずにcorpusを作る
-    user_funs = _extract_funs()
-
     with gzip.open(config['fun2vec']['corpus'], 'wb') as f:
         pickle.dump(user_funs, f)
     logger.info('Saved corpus of {} profiles in {}'.format(len(user_funs), config['fun2vec']['corpus']))
