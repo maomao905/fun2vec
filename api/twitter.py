@@ -169,31 +169,3 @@ def scrape_friends():
                 t._session.commit()
             t._session.close()
             break
-
-def test_friend():
-    import random
-    session = create_session()
-    for idx, user in enumerate(session.query(User.id).filter(User.verified==0, User.friends_count>0).limit(2), 1):
-        # store relationships
-        friend_id = random.randrange(10**5,10**6)
-        print(friend_id)
-        if session.query(Friend).filter_by(user_id=user.id, friend_id=friend_id).count() == 0:
-            new_friend = Friend(
-                user_id=user.id,
-                friend_id=friend_id,
-            )
-            session.add(new_friend)
-            session.commit()
-            break
-
-def test_datetime():
-    from datetime import datetime, timedelta
-    t = datetime.now() - timedelta(hours=1)
-    session = create_session()
-    res = session.query(User).filter(User.created_at > t).limit(100)
-    print(res.count())
-    for user in res:
-        print(user.created_at, user.id)
-
-if __name__ == '__main__':
-    test_datetime()
