@@ -1,4 +1,4 @@
-import os
+import os, sys
 from util import read_sql, load_config
 from word import Word
 import re
@@ -25,6 +25,7 @@ class BaseCorpus:
         logging.config.dictConfig(load_config('log'))
         self._logger = logging.getLogger(__name__)
         self._config_file = load_config('file')['corpus']
+        sys.setrecursionlimit(10000000) # avoid maximum recursion depth exceeded error
 
     def extract(self):
         raise NotImplementedError()
