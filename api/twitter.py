@@ -1,10 +1,10 @@
 import os, sys
 sys.path.append(os.getcwd())
-from db import User, Friend, create_session
+from db import User, Friend, create_session, bulk_save
 from sqlalchemy import text
 import requests
 from requests_oauthlib import OAuth1
-from util import read_secrets, read_sql, load_config
+from util import read_secrets, read_sql, load_config, _unpickle
 import json
 import logging
 from pprint import pprint
@@ -20,13 +20,18 @@ class Twitter:
         self._logger = logging.getLogger(__name__)
 
     def _request(self, endpoint, params, stream=False, timeout=300):
-        return requests.get(
+        res = requests.get(
             endpoint,
             auth=self._auth,
             stream=stream,
             params=params,
             timeout=timeout,
         )
+        if res.ok:
+            return res
+        else:
+            self._logger.error('Requst to Twitter API failed')
+            res.raise_for_status()
 
     @classmethod
     def _extract_user_info(cls, info):
@@ -103,84 +108,67 @@ def scrape_user():
 def scrape_friends():
     """
     Scrape following relationships.
-    Additionaly get profile of the users.
-    1. Iterate over users who have no funs order by friends_count
+    1. Iterate over users who have less than 2 funs order by friends_count
     2. Call friends/ids API to get frield list
-       - Rememeber user ids which I have already gotten friend ids
-       -
+    Twitter API
+        - ref: https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-friends-ids
+        - limit: 15 times per 15 mins
     """
     FILE_SQL = 'sql/get_users_not_in_friends.sql'
+    API_FRIENDS_URL = 'https://api.twitter.com/1.1/friends/ids.json'
+    t = Twitter()
+    config_file = load_config('file')
+    corpus = _unpickle(config_file['corpus']['fun2vec'])
     while True:
         try:
-            session = create_session()
             stmt = text(read_sql(FILE_SQL))
             stmt = stmt.columns(User.id, User.screen_name)
-            res = session.execute(stmt).fetchall()
+            res = t._session.execute(stmt).fetchall()
             if len(res) == 0:
+                t._logger.info('Scraped all friends! Done!')
                 break
             for idx, user in enumerate(res, 1):
-                friends = get_friends(user.id, user.screen_name)
-                num_profiles = 0
-                num_friends = 0
-                if len(friends) > 0:
-                    for friend in friends:
-                        if friend and friend['description'] and friend['verified'] == 0 and friend['lang'] == 'ja':
-                            # store profile of new user
-                            if session.query(User).filter_by(id=friend['id']).count() == 0:
-                                new_user = User(**friend)
-                                session.add(new_user)
-                                session.commit()
-                                num_profiles += 1
+                funs = corpus.get(user.id, set())
+                if len(funs) >= 2:
+                    # insert -1 if the user already have more than 2 funs to check which users
+                    # it has already covered
+                    t._session.add(Friend(user_id=user.id, friend_id=-1))
+                    t._session.commit()
+                    t._logger.info(f'<user_id: {user.id}> Skipped')
+                    continue
 
-                            # store relationships
-                            if session.query(Friend).filter_by(user_id=user.id, friend_id=friend['id']).count() == 0:
-                                new_friend = Friend(
-                                    user_id=user.id,
-                                    friend_id=friend['id'],
-                                )
-                                session.add(new_friend)
-                                session.commit()
-                                num_friends += 1
-                logger.info(f'Add {num_profiles} profiles, Add {num_friends} friends From {len(friends)} friends list')
-            session.close()
-            sleep(15*60) # avoid rate limit
+                friend_ids = t._request(
+                    endpoint=API_FRIENDS_URL,
+                    params={
+                        'user_id':     user.id,
+                        'screen_name': user.screen_name,
+                        'language':    'ja',
+                        'count':       5000,
+                    },
+                ).json()['ids']
+
+                if len(friend_ids) == 0:
+                    # insert -99 in case when the user has no friends
+                    # (rarely occurs though since it has already checked)
+                    t._session.add(Friend(user_id=user.id, friend_id=-99))
+                    t._session.commit()
+                    continue
+
+                # store friends
+                friends = [Friend(user_id=user.id, friend_id=id_) for id_ in friend_ids]
+                bulk_save(t._session, friends)
+                t._logger.info(f'<user_id: {user.id}> Add {len(friends)} friends')
+                break
+            sleep(15 * 60) # avoid rate limit
         except Exception as e:
-            logger.error(e)
+            t._logger.error(e)
         finally:
-            if session.is_active:
-                session.rollback()
+            if t._session.is_active:
+                t._session.rollback()
             else:
-                session.commit()
-            session.close()
-
-def get_friends(user_id, screen_name, count=200):
-    """
-    Get Twitter following users data
-    ref: https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-friends-ids
-    limit: 15 times per 15 mins
-    """
-    API_FRIENDS_URL = 'https://api.twitter.com/1.1/friends/ids.json'
-
-    params = {
-        'user_id': user_id,
-        'screen_name': screen_name,
-        'skip_status': True,
-        'language': 'ja',
-        'count': count,
-    }
-
-    res = requests.get(
-        API_FRIENDS_URL,
-        auth=_get_auth(),
-        params=params,
-        timeout=30,
-    )
-
-    if res.ok:
-        return res.json()['users']
-    else:
-        logger.error('Requst to Twitter API failed')
-        res.raise_for_status()
+                t._session.commit()
+            t._session.close()
+            break
 
 def test_friend():
     import random

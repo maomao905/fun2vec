@@ -10,4 +10,7 @@ AND
   users.verified = 0
 AND
   users.friends_count > 0
-LIMIT 15
+ORDER BY
+  users.friends_count
+DESC
+LIMIT 15;
