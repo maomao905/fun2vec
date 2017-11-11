@@ -16,7 +16,7 @@ def load_config(name):
 
 
 logging.config.dictConfig(load_config('log'))
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 def _unpickle(file_name, compress=True):
     assert os.path.exists(file_name), f'{file_name} does not exist'
