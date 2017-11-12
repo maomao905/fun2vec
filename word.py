@@ -68,7 +68,7 @@ class Word():
         原型をチェック
         英語・カタカナ１文字だけ、ひらがな１文字or２文字は省く
         """
-        if morph.lexeme is None:
+        if morph.lexeme is None or morph.lexeme == '':
             return False
 
         if not self.__valid_pos(morph.pos):
