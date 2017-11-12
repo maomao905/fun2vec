@@ -1,7 +1,7 @@
 from corpus.corpus_base import BaseCorpus
 from db import create_session, User, bulk_save
 import re
-from util import load_config, _pickle
+from util import load_config, _pickle, _unpickle
 from flask_script import Manager
 import logging
 from random import shuffle
@@ -120,15 +120,26 @@ def create():
 @manager.command
 def check_friend_funs():
     fc = Fun2vecCorpus()
+    from sqlalchemy import distinct
+    from db import create_session, Friend
+    session = create_session()
     corpus = _unpickle(fc._config_file['fun2vec'])
-    for user_id, funs in corpus.items():
-        if len(funs) >= 2:
-            continue
-        print(f'user_id: {user_id}, fun is {funs}')
-        # user = session.query(User.description).filter(User.id=user_id).fetchone()
-        # print(f'user description: {user.description}')
-        #
-        # friends = session.query(Friend.user_id).filter(User.id=user_id).fetchall()
-        # for friend in friends:
-        #     uf = fc._session.query(User.description).filter(User.id=friend.friend_id).fetchone()
-        #     print(f'friend description: {uf.description}')
+    try:
+        user_ids = [res[0] for res in session.query(distinct(Friend.user_id)).limit(10).all()]
+        for user_id in user_ids:
+            description = session.query(User.description).filter(User.id==user_id).all()[0][0]
+            print('-----------------------------------------------------')
+            print(f'user_id: {user_id} {description}', end='\n')
+            friend_ids = [res[0] for res in session.query(Friend.friend_id).filter(Friend.user_id==user_id).limit(1000).all()]
+            # users = session.query(User).filter(User.id.in_(friend_ids)).all()
+            # for __user in users:
+            #     print(f'<{__user.id}> {__user.description}')
+            for friend_id in friend_ids:
+                funs = corpus.get(friend_id, set())
+                if len(funs) > 0:
+                    print(f'<{friend_id}> {funs}')
+    except Exception as e:
+        print(e)
+    finally:
+        session.close()
+        del corpus
