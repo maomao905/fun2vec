@@ -1,6 +1,5 @@
 SELECT
-  users.id,
-  users.screen_name
+  users.id
 FROM users
 LEFT JOIN friends
   ON users.id = friends.user_id

@@ -123,7 +123,7 @@ def scrape_friends():
         try:
             t._logger.info('Running query to fetch users...')
             stmt = text(read_sql(FILE_SQL))
-            stmt = stmt.columns(User.id, User.screen_name)
+            stmt = stmt.columns(User.id)
             res = t._session.execute(stmt).fetchall()
             if len(res) == 0:
                 t._logger.info('Scraped all friends! Done!')
@@ -142,7 +142,6 @@ def scrape_friends():
                     endpoint=API_FRIENDS_URL,
                     params={
                         'user_id':     user.id,
-                        'screen_name': user.screen_name,
                         'language':    'ja',
                         'count':       5000,
                     },
