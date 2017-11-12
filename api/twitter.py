@@ -127,6 +127,7 @@ def scrape_friends():
             res = t._session.execute(stmt).fetchall()
             if len(res) == 0:
                 t._logger.info('Scraped all friends! Done!')
+                t._session.close()
                 break
             for idx, user in enumerate(res, 1):
                 funs = corpus.get(user.id, set())
@@ -161,10 +162,9 @@ def scrape_friends():
                 sleep(60) # avoid rate limit
         except Exception as e:
             t._logger.error(e)
-        finally:
             if t._session.is_active:
                 t._session.rollback()
             else:
                 t._session.commit()
-            t._session.close()
+                t._session.close()
             break
