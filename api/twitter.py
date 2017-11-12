@@ -121,6 +121,7 @@ def scrape_friends():
     corpus = _unpickle(config_file['corpus']['fun2vec'])
     while True:
         try:
+            t._logger.info('Running query to fetch users...')
             stmt = text(read_sql(FILE_SQL))
             stmt = stmt.columns(User.id, User.screen_name)
             res = t._session.execute(stmt).fetchall()
@@ -152,14 +153,13 @@ def scrape_friends():
                     # (rarely occurs though since it has already checked)
                     t._session.add(Friend(user_id=user.id, friend_id=-99))
                     t._session.commit()
-                    continue
+                else:
+                    # store friends
+                    friends = [Friend(user_id=user.id, friend_id=id_) for id_ in friend_ids]
+                    bulk_save(t._session, friends)
+                    t._logger.info(f'<user_id: {user.id}> Add {len(friends)} friends')
 
-                # store friends
-                friends = [Friend(user_id=user.id, friend_id=id_) for id_ in friend_ids]
-                bulk_save(t._session, friends)
-                t._logger.info(f'<user_id: {user.id}> Add {len(friends)} friends')
-                break
-            sleep(15 * 60) # avoid rate limit
+                sleep(60) # avoid rate limit
         except Exception as e:
             t._logger.error(e)
         finally:

@@ -20,6 +20,7 @@ _logger = logging.getLogger(__name__)
 
 def _unpickle(file_name, compress=True):
     assert os.path.exists(file_name), f'{file_name} does not exist'
+    _logger.info(f'unpickle {file_name}')
     if compress:
         with gzip.open(file_name, 'rb') as f:
             return pickle.load(f)
@@ -29,7 +30,7 @@ def _unpickle(file_name, compress=True):
 
 
 def _pickle(objects, file_name, compress=True):
-    assert os.path.exists(file_name), f'{file_name} does not exist'
+    _logger.info(f'pickle {file_name}')
     if compress:
         with gzip.open(file_name, 'wb') as f:
             pickle.dump(objects, f)
