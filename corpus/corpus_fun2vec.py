@@ -47,7 +47,6 @@ class Fun2vecCorpus(BaseCorpus):
 
         # funs: ['三浦半島探検', 'ヒリゾ', '伊豆が好きです。']
         funs = ma.group().split(ma.group('sep'))
-
         for idx, fun in enumerate(funs):
             words = self._word.preprocess(fun)
             if len(words) > 0:
@@ -117,3 +116,19 @@ def create():
         session.close()
     _pickle(corpus_with_user_id, fc._config_file['fun2vec'])
     fc._logger.info(f"Saved corpus of {len(corpus_with_user_id)} sentences in {fc._config_file['fun2vec']}")
+
+@manager.command
+def check_friend_funs():
+    fc = Fun2vecCorpus()
+    corpus = _unpickle(fc._config_file['fun2vec'])
+    for user_id, funs in corpus.items():
+        if len(funs) >= 2:
+            continue
+        print(f'user_id: {user_id}, fun is {funs}')
+        # user = session.query(User.description).filter(User.id=user_id).fetchone()
+        # print(f'user description: {user.description}')
+        #
+        # friends = session.query(Friend.user_id).filter(User.id=user_id).fetchall()
+        # for friend in friends:
+        #     uf = fc._session.query(User.description).filter(User.id=friend.friend_id).fetchone()
+        #     print(f'friend description: {uf.description}')
