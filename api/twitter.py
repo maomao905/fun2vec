@@ -31,6 +31,8 @@ class Twitter:
             return res
         else:
             self._logger.error('Requst to Twitter API failed')
+            if res.reason == 'Authorization Required': # Unauthorized account
+                return res.reason
             res.raise_for_status()
 
     @classmethod
@@ -139,25 +141,31 @@ def scrape_friends():
                     t._logger.info(f'<user_id: {user.id}> Skipped')
                     continue
 
-                friend_ids = t._request(
+                response = t._request(
                     endpoint=API_FRIENDS_URL,
                     params={
                         'user_id':     user.id,
                         'language':    'ja',
                         'count':       5000,
                     },
-                ).json()['ids']
-
-                if len(friend_ids) == 0:
-                    # insert -99 in case when the user has no friends
-                    # (rarely occurs though since it has already checked)
-                    t._session.add(Friend(user_id=user.id, friend_id=-99))
+                )
+                if response == 'Authorization Required':
+                    # insert -199 in case when the user account is not authorized.
+                    t._session.add(Friend(user_id=user.id, friend_id=-199))
                     t._session.commit()
+                    t._logger.info(f'<user_id: {user.id}> The user is not authorized')
                 else:
-                    # store friends
-                    friends = [Friend(user_id=user.id, friend_id=id_) for id_ in friend_ids]
-                    bulk_save(t._session, friends)
-                    t._logger.info(f'<user_id: {user.id}> Add {len(friends)} friends')
+                    friend_ids = response.json()['ids']
+                    if len(friend_ids) == 0:
+                        # insert -99 in case when the user has no friends
+                        # (rarely occurs though since it has already checked)
+                        t._session.add(Friend(user_id=user.id, friend_id=-99))
+                        t._session.commit()
+                    else:
+                        # store friends
+                        friends = [Friend(user_id=user.id, friend_id=id_) for id_ in friend_ids]
+                        bulk_save(t._session, friends)
+                        t._logger.info(f'<user_id: {user.id}> Add {len(friends)} friends')
 
                 sleep(60) # avoid rate limit
         except Exception as e:
