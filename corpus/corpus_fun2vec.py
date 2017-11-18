@@ -138,30 +138,3 @@ def cluster():
             _logger.info(f'Finished {i} profiles')
     _pickle(clustered_corpus, config['corpus']['fun2vec_clustered'])
     _logger.info(f"Saved corpus of {len(clustered_corpus)} profiles in {config['corpus']['fun2vec_clustered']}")
-
-@manager.command
-def check_friend_funs():
-    fc = Fun2vecCorpus()
-    from sqlalchemy import distinct
-    from db import create_session, Friend
-    session = create_session()
-    corpus = _unpickle(config['corpus']['fun2vec'])
-    try:
-        user_ids = [res[0] for res in session.query(distinct(Friend.user_id)).limit(10).all()]
-        for user_id in user_ids:
-            description = session.query(User.description).filter(User.id==user_id).all()[0][0]
-            print('-----------------------------------------------------')
-            print(f'user_id: {user_id} {description}', end='\n')
-            friend_ids = [res[0] for res in session.query(Friend.friend_id).filter(Friend.user_id==user_id).limit(1000).all()]
-            # users = session.query(User).filter(User.id.in_(friend_ids)).all()
-            # for __user in users:
-            #     print(f'<{__user.id}> {__user.description}')
-            for friend_id in friend_ids:
-                funs = corpus.get(friend_id, set())
-                if len(funs) > 0:
-                    print(f'<{friend_id}> {funs}')
-    except Exception as e:
-        print(e)
-    finally:
-        session.close()
-        del corpus
