@@ -100,22 +100,23 @@ class Fun2vecCorpus(BaseCorpus):
 manager = Manager(usage='Perform fun2vec corpus operations')
 @manager.command
 def create():
-    corpus_with_user_id = {}
+    corpus = []
     session = create_session()
     fc = Fun2vecCorpus()
     try:
         for idx, user in enumerate(session.query(User).filter(User.verified==0).yield_per(500), 1):
-            funs = fc.extract(user.description)
-            shuffle(funs)
-            corpus_with_user_id[user.id] = set(funs)
+            funs = list(set(fc.extract(user.description)))
+            if len(funs) > 0:
+                shuffle(funs)
+                corpus.append(funs)
             if idx % 10000 == 0:
                 fc._logger.info(f'{idx} profiles')
     except Exception as e:
         fc._logger.error(e)
     finally:
         session.close()
-    _pickle(corpus_with_user_id, fc._config_file['fun2vec'])
-    fc._logger.info(f"Saved corpus of {len(corpus_with_user_id)} sentences in {fc._config_file['fun2vec']}")
+    _pickle(corpus, fc._config_file['fun2vec'])
+    fc._logger.info(f"Saved corpus of {len(corpus)} sentences in {fc._config_file['fun2vec']}")
 
 @manager.command
 def check_friend_funs():
