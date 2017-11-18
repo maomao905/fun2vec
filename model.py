@@ -25,7 +25,7 @@ Knowledge of Gensim
 
 class Model:
     @classmethod
-    def create(cls, model_name, size=700, min_count=30, window=5, compute_loss=True):
+    def create(cls, model_name, size=700, min_count=40, window=5, compute_loss=True):
         sentences = _unpickle(config['corpus'][model_name])
         _logger.info(f'Creating word2vec model from {len(sentences)} sentences...')
         # cbow is default
@@ -90,9 +90,9 @@ def main(args):
     restrict_vocab = int(args.restrict_vocab) if args.restrict_vocab else None
     models = OrderedDict()
     if model_name in ['word2vec', 'all']:
-        models['word2vec'] = load_model('word2vec')
+        models['word2vec'] = Model.load_model('word2vec')
     if model_name in ['fun2vec', 'all']:
-        models['fun2vec_clustered'] = load_model('fun2vec_clustered')
+        models['fun2vec'] = Model.load_model('fun2vec')
     try:
         while True:
             text = prompt('words> ', history=history)

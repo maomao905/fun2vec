@@ -5,6 +5,12 @@ from util import load_config, _pickle, _unpickle
 from flask_script import Manager
 import logging
 from random import shuffle
+from model import Model
+from cluster import cluster_funs
+
+logging.config.dictConfig(load_config('log'))
+_logger = logging.getLogger(__name__)
+config = load_config('file')
 
 class Fun2vecCorpus(BaseCorpus):
     __MAX_WORD_LENGTH = 12
@@ -18,8 +24,6 @@ class Fun2vecCorpus(BaseCorpus):
 
     def __init__(self):
         super().__init__()
-        logging.config.dictConfig(load_config('log'))
-        self._logger = logging.getLogger(__name__)
 
     def extract(self, text):
         """
@@ -110,13 +114,30 @@ def create():
                 shuffle(funs)
                 corpus.append(funs)
             if idx % 10000 == 0:
-                fc._logger.info(f'{idx} profiles')
+                _logger.info(f'{idx} profiles')
     except Exception as e:
-        fc._logger.error(e)
+        _logger.error(e)
     finally:
         session.close()
-    _pickle(corpus, fc._config_file['fun2vec'])
-    fc._logger.info(f"Saved corpus of {len(corpus)} sentences in {fc._config_file['fun2vec']}")
+    _pickle(corpus, config['corpus']['fun2vec'])
+    _logger.info(f"Saved corpus of {len(corpus)} sentences in {config['corpus']['fun2vec']}")
+
+@manager.command
+def cluster():
+    """
+    既存のfun2vec corpusから似た興味をグループ化して、新たなcorpusを作る
+    """
+    clustered_corpus = []
+    corpus = _unpickle(config['corpus']['fun2vec'])
+    word2vec_model = Model.load_model('word2vec')
+    for i, user_funs in enumerate(corpus, 1):
+        funs = cluster_funs(word2vec_model, user_funs)
+        if len(funs) >= 2:
+            clustered_corpus.append(funs)
+        if i % 1000 == 0:
+            _logger.info(f'Finished {i} profiles')
+    _pickle(clustered_corpus, config['corpus']['fun2vec_clustered'])
+    _logger.info(f"Saved corpus of {len(clustered_corpus)} profiles in {config['corpus']['fun2vec_clustered']}")
 
 @manager.command
 def check_friend_funs():
@@ -124,7 +145,7 @@ def check_friend_funs():
     from sqlalchemy import distinct
     from db import create_session, Friend
     session = create_session()
-    corpus = _unpickle(fc._config_file['fun2vec'])
+    corpus = _unpickle(config['corpus']['fun2vec'])
     try:
         user_ids = [res[0] for res in session.query(distinct(Friend.user_id)).limit(10).all()]
         for user_id in user_ids:

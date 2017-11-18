@@ -14,7 +14,6 @@ def load_config(name):
         config = yaml.load(f)
         return config
 
-
 logging.config.dictConfig(load_config('log'))
 _logger = logging.getLogger(__name__)
 
