@@ -9,11 +9,10 @@ from flask_script import Manager
 import logging
 from pprint import pprint
 from collections import OrderedDict
-from util import load_config
+from util import load_config, _pickle, _unpickle
 
 logging.config.dictConfig(load_config('log'))
-logger = logging.getLogger(__name__)
-
+_logger = logging.getLogger(__name__)
 config = load_config('file')
 
 """
@@ -24,29 +23,40 @@ Knowledge of Gensim
 ・model.wv.index2word[0] -> 'アニメ' 単語取得
 """
 
+class Model:
+    @classmethod
+    def create(cls, model_name, size=700, min_count=30, window=5, compute_loss=True):
+        sentences = _unpickle(config['corpus'][model_name])
+        _logger.info(f'Creating word2vec model from {len(sentences)} sentences...')
+        # cbow is default
+        model = word2vec.Word2Vec(sentences, size=size, min_count=min_count, window=window, compute_loss=compute_loss)
+        model.init_sims(replace=True) # trim unneeded model memory by L2-norm
+        _logger.info(f'Loss is {model.get_latest_training_loss()}')
+        cls._save_model(model, config['model'][model_name])
+
+    @staticmethod
+    def _save_model(model, file_path):
+        _pickle(model, file_path) # edit protocol later if error occurs
+        _logger.info(f'Saved model in {file_path}')
+
+    @staticmethod
+    def load_model(model_name):
+        model = word2vec.Word2Vec.load(config['model'][model_name], mmap=None)
+        print(model_name.center(70, '-'))
+        print('corpus size:', str(model.corpus_count // 10000) + '万')
+        print('vocab size:', '{:,}'.format(len(model.wv.vocab)))
+        print('loss:', str(model.get_latest_training_loss() // 10000) + '万')
+        # memory friendly
+        return model.wv
+
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
 def create_word2vec():
-    'Create word2vec model'
-    with gzip.open(config['word2vec']['corpus'], 'rb') as f:
-        sentences = pickle.load(f)
-    logger.info('Creating word2vec model from {} sentences...'.format(len(sentences)))
-    model = word2vec.Word2Vec(sentences, size=700, min_count=30, window=5, compute_loss=True)
-    model.init_sims(replace=True) # to trim unneeded model memory by L2-norm
-    logger.info('Loss is {}'.format(model.get_latest_training_loss()))
-    save_model(model, config['word2vec']['model'])
+    Model.create('word2vec')
 
 @manager.command
 def create_fun2vec():
-    'Create fun2vec model'
-    with gzip.open(config['fun2vec']['corpus'], 'rb') as f:
-        funs = pickle.load(f)
-    logger.info('Creating fun2vec model from {} sentences...'.format(len(funs)))
-    # cbow is default
-    model = word2vec.Word2Vec(funs, size=700, min_count=20, window=20, compute_loss=True)
-    model.init_sims(replace=True)
-    logger.info('Loss is {}'.format(model.get_latest_training_loss()))
-    save_model(model, config['fun2vec']['model'])
+    Model.create('fun2vec', min_count=20, window=10)
 
 @manager.option('-m', '--model', dest='model_name', default='fun2vec')
 @manager.option('-n', '--topn', dest='topn', default=300)
@@ -63,11 +73,6 @@ def check_vocab(model_name, topn, target_word):
             if idx >= int(topn):
                 break
 
-def save_model(model, file_path):
-    with gzip.open(file_path, 'wb') as f:
-        pickle.dump(model, f, protocol=2)
-    logger.info('Saved model in {}'.format(file_path))
-
 def test_visualize(wv):
     """
     ref: http://projector.tensorflow.org/
@@ -78,15 +83,6 @@ def test_visualize(wv):
 
     df_wv.to_csv('data/wv.tsv', sep='\t', header=False, index=False)
     df_meta.to_csv('data/metadata.tsv', sep='\t', header=False, index=False)
-
-def load_model(model_name):
-    model = word2vec.Word2Vec.load(config[model_name]['model'], mmap=None)
-    print(model_name.center(70, '-'))
-    print('corpus size:', str(model.corpus_count // 10000) + '万')
-    print('vocab size:', '{:,}'.format(len(model.wv.vocab)))
-    print('loss:', str(model.get_latest_training_loss() // 10000) + '万')
-    # memory friendly
-    return model.wv
 
 def main(args):
     model_name = args.model

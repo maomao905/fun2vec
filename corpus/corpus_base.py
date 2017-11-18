@@ -2,7 +2,7 @@ import os
 from util import read_sql, load_config
 from word import Word
 import re
-from fun2vec import load_model
+from model import Model
 import gzip
 import logging
 import pandas as pd

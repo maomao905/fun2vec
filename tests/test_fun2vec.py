@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.getcwd())
-from fun2vec import load_model
+from model import Model
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from util import ljust_ja, CustomLexer, get_color_style

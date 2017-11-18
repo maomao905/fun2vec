@@ -29,14 +29,14 @@ def _unpickle(file_name, compress=True):
             return pickle.load(f)
 
 
-def _pickle(objects, file_name, compress=True):
+def _pickle(objects, file_name, compress=True, protocol=pickle.HIGHEST_PROTOCOL):
     _logger.info(f'pickle {file_name}')
     if compress:
         with gzip.open(file_name, 'wb') as f:
-            pickle.dump(objects, f)
+            pickle.dump(objects, f, protocol=protocol)
     else:
         with open(file_name, 'wb') as f:
-            pickle.dump(objects, f)
+            pickle.dump(objects, f, protocol=protocol)
 
 # class FrozenStructMixin:
 #     __slots__ = ('_data',)
@@ -64,7 +64,7 @@ def _pickle(objects, file_name, compress=True):
 def find_close_words():
     import difflib
     import pandas as pd
-    from fun2vec import load_model
+    from model import Model
     result = []
     model = load_model('word2vec').wv
     model_fun2vec = load_model('fun2vec').wv

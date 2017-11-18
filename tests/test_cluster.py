@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.getcwd())
 from cluster import cluster_funs
-from fun2vec import load_model
+from model import Model
 from pprint import pprint
 from util import load_config
 import random
