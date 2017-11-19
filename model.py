@@ -21,11 +21,23 @@ Knowledge of Gensim
 ・model.wv.vocab['アニメ'].index -> index取得
 ・複数単語のベクトルをまとめて取得するときはmodel.wv[['アニメ', 'オタク']]
 ・model.wv.index2word[0] -> 'アニメ' 単語取得
+・get_embedding_layer -> keras
 """
 
 class Model:
+    def __init__(self, name):
+        self._model = self.load_model(name)
+
+    @property
+    def vector(self):
+        return self._model.syn0norm
+
+    @property
+    def vocab(self):
+        return self._model.index2word
+
     @classmethod
-    def create(cls, model_name, size=700, min_count=40, window=5, compute_loss=True):
+    def create(cls, model_name, size=700, min_count=30, window=5, compute_loss=True):
         sentences = _unpickle(config['corpus'][model_name])
         _logger.info(f'Creating word2vec model from {len(sentences)} sentences...')
         # cbow is default
@@ -48,6 +60,18 @@ class Model:
         print('loss:', str(model.get_latest_training_loss() // 10000) + '万')
         # memory friendly
         return model.wv
+
+    def get_vectors(self, words):
+        exist_words = []
+        vec = []
+        for w in words:
+            try:
+                vec.append(self._model[w])
+                exist_words.append(w)
+            except KeyError:
+                # print(w, 'not in wordvec')
+                continue
+        return exist_words, vec
 
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
