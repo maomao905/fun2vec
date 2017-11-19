@@ -10,7 +10,7 @@ from pygments.token import Token, String, Number
 from pygments.style import Style
 
 def load_config(name):
-    with open(os.path.join('config', name + '_config.yml'), 'r') as f:
+    with open(os.path.join(os.path.dirname(__file__), 'config', name + '_config.yml'), 'r') as f:
         config = yaml.load(f)
         return config
 

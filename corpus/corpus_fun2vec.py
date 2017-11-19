@@ -134,7 +134,7 @@ def cluster():
         funs = cluster_funs(word2vec_model, user_funs)
         if len(funs) >= 2:
             clustered_corpus.append(funs)
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             _logger.info(f'Finished {i} profiles')
     _pickle(clustered_corpus, config['corpus']['fun2vec_clustered'])
     _logger.info(f"Saved corpus of {len(clustered_corpus)} profiles in {config['corpus']['fun2vec_clustered']}")
