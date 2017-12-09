@@ -34,6 +34,7 @@ class Model:
 
     @property
     def vocab(self):
+        """list of vocabrary"""
         return self._model.index2word
 
     @classmethod
@@ -72,6 +73,9 @@ class Model:
                 # print(w, 'not in wordvec')
                 continue
         return exist_words, vec
+
+    def most_similar(self, words, topn=10):
+        return self._model.most_similar(words, topn=topn)
 
 manager = Manager(usage='Create word2vec/fun2vec model')
 @manager.command
