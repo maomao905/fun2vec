@@ -12,6 +12,8 @@ from time import sleep
 from flask_script import Manager
 
 class Twitter:
+    __ENDPOINT_STATUS_FILTER = 'https://stream.twitter.com/1.1/statuses/filter.json'
+    __ENDPOINT_STATUS_UPDATE = 'https://api.twitter.com/1.1/statuses/update.json'
     __COLUMNS_USER = User.__table__.columns.keys()
     def __init__(self):
         self._session = create_session()
@@ -19,14 +21,16 @@ class Twitter:
         logging.config.dictConfig(load_config('log'))
         self._logger = logging.getLogger(__name__)
 
-    def _request(self, endpoint, params, stream=False, timeout=300):
-        res = requests.get(
-            endpoint,
+    def _request(self, endpoint, params, method='GET', stream=False, timeout=300):
+        res = requests.request(
+            method=method.upper(),
+            url=endpoint,
             auth=self._auth,
             stream=stream,
             params=params,
             timeout=timeout,
         )
+
         if res.ok:
             return res
         else:
@@ -40,6 +44,41 @@ class Twitter:
         user_info = {k: v for k, v in info['user'].items() if k in cls.__COLUMNS_USER}
         retweet_user_info = {k: v for k, v in info.get('retweeted_status', {}).get('user', {}).items() if k in cls.__COLUMNS_USER}
         return user_info, retweet_user_info
+
+    def search(self, keywords):
+        """search keywords from realtime tweets
+        ref: https://developer.twitter.com/en/docs/tweets/filter-realtime/api-reference/post-statuses-filter.html
+
+        :param keywords: specified by a comma-separated list
+        """
+        res = self._request(
+            method='POST',
+            endpoint=self.__ENDPOINT_STATUS_FILTER,
+            params={
+                'track': keywords,
+                'language': 'ja',
+                'stall_warnings': True,
+            },
+            stream=True
+        )
+        return res
+
+    def send(self, text, reply_to=None):
+        """tweet
+        :param text: if reply_to specified, this must include @username.
+        :param reply_to: if specified, reply to the specified tweet id.
+        """
+        if reply_to:
+            assert '@' in text, '@username must be included in the text when you reply.'
+
+        res = self._request(
+            method='POST',
+            endpoint=self.__ENDPOINT_STATUS_UPDATE,
+            params={
+                'status': text,
+                'in_reply_to_status_id': reply_to,
+            }
+        )
 
     def _save_users(self, store_users):
         """
@@ -193,4 +232,3 @@ def geo_search():
             'max_results': 30,
         },
     ).json()
-    import ipdb; ipdb.set_trace()
