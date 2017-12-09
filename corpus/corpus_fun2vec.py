@@ -138,3 +138,41 @@ def cluster():
             _logger.info(f'Finished {i} profiles')
     _pickle(clustered_corpus, config['corpus']['fun2vec_clustered'])
     _logger.info(f"Saved corpus of {len(clustered_corpus)} profiles in {config['corpus']['fun2vec_clustered']}")
+
+@manager.command
+def cluster_by_kmeans():
+    """
+    Use KMeans to group similar words.
+    """
+    import os, sys
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+    from cluster import Cluster
+    from collections import defaultdict
+    import random
+
+    clustered_corpus = []
+    corpus = _unpickle(config['corpus']['fun2vec'])
+    clf = Cluster(config['cluster']['kmeans'])
+    m = Model('word2vec')
+    cluster = dict(zip(m.vocab, clf.predict(m.vector)))
+    del m, clf # memory friendly
+
+    for i, words in enumerate(corpus, 1):
+        centroids = defaultdict(list)
+        for word in words:
+            label = cluster.get(word)
+            centroids[label].append(word)
+        # if there are the words which have the same labels, randomly choose one of them and remove others.
+        clustered_words = [random.choice(v) if k is not None and len(v) >= 2 else v[0] for k, v in centroids.items()]
+
+        if len(clustered_words) >= 2:
+            clustered_corpus.append(clustered_words)
+            if i < 100:
+                print('----------------------------')
+                print(words)
+                print(clustered_words)
+
+        if i % 10000 == 0:
+            _logger.info(f'Finished {i} profiles')
+    _pickle(clustered_corpus, config['corpus']['fun2vec_clustered'])
+    _logger.info(f"Saved corpus of {len(clustered_corpus)} profiles in {config['corpus']['fun2vec_clustered']}")

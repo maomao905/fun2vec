@@ -10,8 +10,10 @@ corpus:
   fun2vec_clustered: data/fun2vec_clustered_corpus.pkl.gz
 cluster:
   kmeans: data/kmeans.pkl
+  minibatch_kmeans: data/minibatch_kmeans.pkl
   agglomerate: data/agglomerate.pkl
   dbscan: data/dbscan.pkl
 model:
   word2vec: data/word2vec.model.gz
   fun2vec: data/fun2vec.model.gz
+  fun2vec_clustered: data/fun2vec_clustered.model.gz
