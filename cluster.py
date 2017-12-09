@@ -25,6 +25,10 @@ class Cluster:
         """
         return self._model.predict(X)
 
+    @property
+    def labels(self):
+        return self._model.labels_
+
     @staticmethod
     def save_model(model, file_path):
         joblib.dump(model, file_path, compress=True)
@@ -42,17 +46,25 @@ class Cluster:
             print(f'{w}と同じクラスタにいるワードは')
             print(group_words)
 
+def cluster_by_minibatch_kmeans(X, K):
+    """
+    興味で同じような興味は塊が多すぎて、同じような興味が出てくるのでそれを防ぐため、clusteringする
+    current vocab_size => len(model.wv.vocab) 23402
+    """
+    clf = MiniBatchKMeans(n_clusters=K, batch_size=500, init_size=10000, random_state=0)
+    clf.fit(embeddings)
+    _logger.info(f'SSE: {clf.inertia_}')
+    save(clf, config['cluster']['minibatch_kmeans'])
+
 def cluster_by_kmeans(X, K):
     """
     興味で同じような興味は塊が多すぎて、同じような興味が出てくるのでそれを防ぐため、clusteringする
     current vocab_size => len(model.wv.vocab) 23402
     """
-    # clf = KMeans(n_clusters=K, max_iter=20, random_state=0, n_jobs=-1, verbose=1)
-    # 33681.2220748961
-    clf = MiniBatchKMeans(n_clusters=K, batch_size=500, init_size=10000, random_state=0)
+    clf = KMeans(n_clusters=K, max_iter=20, random_state=0, n_jobs=-1, verbose=1)
     clf.fit(embeddings)
     _logger.info(f'SSE: {clf.inertia_}')
-    save(clf, config['cluster']['minibatch_kmeans'])
+    save(clf, config['cluster']['kmeans'])
 
 def cluster_hierarchical():
     """
@@ -207,9 +219,10 @@ def find_topic():
 if __name__ == '__main__':
     # 37082.201429787434
     # 37977.87518045306
-    # embeddings = Model.load_model('word2vec').wv.syn0norm
-    # cluster_by_kmeans(embeddings, 800)
-    check_kmeans(['将棋', 'プログラミング', 'ビリヤード'])
+    # 40493.79704496562
+    embeddings = Model.load_model('word2vec').wv.syn0norm
+    cluster_by_kmeans(embeddings, 800)
+    # check_kmeans(['将棋', 'プログラミング', 'ビリヤード'])
     # check_kmeans(['将棋', 'サッカー', '野球', 'ロッテ', 'パソコン', 'タブレット', 'スマホ', '携帯'])
     # check_kmeans(['Ruby', 'C', 'プログラミング', 'Linux', 'Vim', 'エンジニア', 'スマホ', 'VR'])
     # check_kmeans(['ビリヤード', 'ダーツ', 'ボウリング', '水泳', 'ドライブ', '山登り', 'ダイビング', '育児'])
