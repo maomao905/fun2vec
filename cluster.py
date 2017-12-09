@@ -1,4 +1,4 @@
-from sklearn.cluster import MiniBatchKMeans, AgglomerativeClustering, DBSCAN
+from sklearn.cluster import MiniBatchKMeans, AgglomerativeClustering, DBSCAN, KMeans
 from model import Model
 from sklearn.externals import joblib
 import numpy as np
@@ -15,15 +15,44 @@ _logger = logging.getLogger(__name__)
 
 config = load_config('file')
 
-def cluster_funs_by_kmeans(X, K):
+class Cluster:
+    def __init__(self, path):
+        self._model = self.load_model(path)
+
+    def predict(self, X):
+        """
+        X: input vector array
+        """
+        return self._model.predict(X)
+
+    @staticmethod
+    def save_model(model, file_path):
+        joblib.dump(model, file_path, compress=True)
+        _logger.info(f'Saved model in {file_path}')
+
+    @staticmethod
+    def load_model(file_path):
+        return joblib.load(file_path)
+
+    def check():
+        for w, centroid in zip(words, centroids):
+            group_indices = np.argwhere(clf.labels_ == centroid)
+            group_words = [wv.index2word[idx] for idx in group_indices.flatten()]
+            print('-' * 100)
+            print(f'{w}と同じクラスタにいるワードは')
+            print(group_words)
+
+def cluster_by_kmeans(X, K):
     """
     興味で同じような興味は塊が多すぎて、同じような興味が出てくるのでそれを防ぐため、clusteringする
     current vocab_size => len(model.wv.vocab) 23402
     """
+    # clf = KMeans(n_clusters=K, max_iter=20, random_state=0, n_jobs=-1, verbose=1)
+    # 33681.2220748961
     clf = MiniBatchKMeans(n_clusters=K, batch_size=500, init_size=10000, random_state=0)
     clf.fit(embeddings)
     _logger.info(f'SSE: {clf.inertia_}')
-    save(clf, config['cluster']['kmeans'])
+    save(clf, config['cluster']['minibatch_kmeans'])
 
 def cluster_hierarchical():
     """
@@ -176,8 +205,11 @@ def find_topic():
     pprint(lda.show_topics(num_words=20))
 
 if __name__ == '__main__':
-    embeddings = Model.load_model('word2vec').wv.syn0norm
-    cluster_by_agglomerate(embeddings, 700)
+    # 37082.201429787434
+    # 37977.87518045306
+    # embeddings = Model.load_model('word2vec').wv.syn0norm
+    # cluster_by_kmeans(embeddings, 800)
+    check_kmeans(['将棋', 'プログラミング', 'ビリヤード'])
     # check_kmeans(['将棋', 'サッカー', '野球', 'ロッテ', 'パソコン', 'タブレット', 'スマホ', '携帯'])
     # check_kmeans(['Ruby', 'C', 'プログラミング', 'Linux', 'Vim', 'エンジニア', 'スマホ', 'VR'])
     # check_kmeans(['ビリヤード', 'ダーツ', 'ボウリング', '水泳', 'ドライブ', '山登り', 'ダイビング', '育児'])
