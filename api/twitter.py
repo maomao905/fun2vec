@@ -176,3 +176,21 @@ def scrape_friends():
                 t._session.commit()
                 t._session.close()
             break
+
+@manager.command
+def geo_search():
+    URL = 'https://api.twitter.com/1.1/geo/reverse_geocode.json'
+    t = Twitter()
+    t._logger.info('Requsting to Twitter API...')
+    res = t._request(
+        endpoint=URL,
+        params={
+            'language': 'ja', # only Japanese
+            'granularity': 'poi',
+            'lat': 35.455865,
+            'long': 139.633103,
+            'accuracy': 5000,
+            'max_results': 30,
+        },
+    ).json()
+    import ipdb; ipdb.set_trace()
