@@ -2,12 +2,15 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from model import Model
 from cluster import Cluster
-from util import load_config
+from util import load_config, _unpickle, _pickle
 from api.twitter import Twitter
 import numpy as np
 import json
 from time import sleep
+import logging.config
 config = load_config('file')
+logging.config.dictConfig(load_config('log'))
+_logger = logging.getLogger(__name__)
 # modelは最初に読み込みしておく
 
 # Streaming APIでずっと調べる
@@ -16,24 +19,35 @@ config = load_config('file')
 # fun2vecで類似度が高いものを取得
 # 入力語でのクラスタと同じクラスタにいる結果は除く
 
-# 返却
-fun2vec = Model('fun2vec')
-word2vec = Model('word2vec')
-clf = Cluster(config['cluster']['kmeans'])
-def get_cluster_words(words):
-    cluster_words = []
-    X = word2vec.get_vectors(words)[1]
-    centroids = clf.predict(X)
-    for w, centroid in zip(words, centroids):
-        group_indices = np.argwhere(clf.labels == centroid)
-        cluster_words.extend([word2vec.vocab[idx] for idx in group_indices.flatten()])
-    return cluster_words
+def make_word_cluster_label_data():
+    """make data that key is word, value is clustered label
+    {'将棋': 748, '囲碁': 748,,,,}
+    """
+    word_label = {}
+    word2vec = Model('word2vec')
+    clf = Cluster(config['cluster']['kmeans'])
+    _pickle(dict(zip(word2vec.vocab, clf.labels)), config['cluster']['labels'])
+    _logger.info(f"{len(word2vec.vocab)} word label data saved in {config['cluster']['labels']}")
+
+def get_next_funs(funs, cluster_labels, fun2vec):
+    user_funs = [fun for fun in funs if fun in fun2vec.vocab]
+    text = ''
+    if len(funs) == 0:
+        return text
+    elif len(funs) < 3:
+        text += f'あなたの趣味や興味をなるべく多く入れたほうが正確になります。'
+    user_labels = list(filter(lambda x: x != None, [cluster_labels.get(fun) for fun in funs]))
+    result = [word for word, sim in fun2vec.most_similar(funs, topn=50) if cluster_labels.get(word) not in user_labels]
+    result = result[:10]
+    text += 'あなたに合う趣味は順番に、' + '/'.join(result)
+    return text
 
 def main():
     """
     Detect particular hashtag
     """
-
+    fun2vec = Model('fun2vec')
+    cluster_labels = _unpickle(config['cluster']['labels'])
     __TAG = '#趣味を教えて'
     t = Twitter()
     t._logger.info('Requsting to Twitter API...')
@@ -45,17 +59,11 @@ def main():
                 if line:
                     info = json.loads(line.decode('utf-8'))
                     user_funs = info['text'].replace(__TAG, '').strip().split()
-                    user_funs = [fun for fun in user_funs if fun in fun2vec.vocab]
-                    text = ''
-                    if len(user_funs) == 0:
-                        continue
-                    elif len(user_funs) < 3:
-                        text += f'あなたの趣味や興味をなるべく多く入れたほうが正確になります。'
-                    cluster_words = get_cluster_words(user_funs)
-                    result = [word for word, sim in fun2vec.most_similar(user_funs, topn=50) if word not in cluster_words]
-                    result = result[:10]
-                    text += 'あなたに合う趣味は順番に、' + '/'.join(result)
-                    t.send(f"@{info['user']['screen_name']} {text}", reply_to=info['id'])
+                    _logger.info(f"@{info['user']['screen_name']}", user_funs)
+                    text = get_next_funs(user_funs, cluster_labels, fun2vec)
+                    if text:
+                        t.send(f"@{info['user']['screen_name']} {text}", reply_to=info['id'])
+                    _logger.info(f"@{info['user']['screen_name']}", text)
             except Exception as e:
                 t._logger.error(e)
                 sleep(15*60)
@@ -66,3 +74,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # make_word_cluster_label_data()
+    # fun2vec = Model('fun2vec')
+    # cluster_labels = _unpickle(config['cluster']['labels'])
+    # print(get_next_funs(['将棋', 'プログラミング', 'ビリヤード'], cluster_labels, fun2vec))

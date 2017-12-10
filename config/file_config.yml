@@ -13,6 +13,7 @@ cluster:
   minibatch_kmeans: data/minibatch_kmeans.pkl
   agglomerate: data/agglomerate.pkl
   dbscan: data/dbscan.pkl
+  labels: data/word_labels.pkl.gz
 model:
   word2vec: data/word2vec.model.gz
   fun2vec: data/fun2vec.model.gz
