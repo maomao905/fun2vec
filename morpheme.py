@@ -8,8 +8,8 @@ class WordParser():
     # http://taku910.github.io/mecab/format.html
     __DEFAULT_NODE = {
         'keys':         ('surface', 'lexeme',  'pos'),
-        'node-format':  ('%H',      '%f[6]',    '%F-[0,1,2,3]'),
-        'unk-format':   ('%m',      '%m',       '%F-[0,1,2,3]'),
+        'node-format':  ('%H',      '%f[6]',   '%F-[0,1,2,3]'),
+        'unk-format':   ('%m',      '%m',      '%F-[0,1,2,3]'),
     }
     __EOS_FORMAT  = ''
 

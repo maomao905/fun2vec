@@ -1,14 +1,31 @@
 version: 1
 formatters:
-  consoleFormatter:
+  basicFormatter:
     format: '[%(asctime)s][%(levelname)s][%(name)s #%(funcName)s:%(lineno)d] %(message)s'
     datefmt: '%Y-%m-%d %H:%M:%S'
+
+loggers:
+  tweetlog:
+    handlers: [tweetHandler]
+    level: INFO
+    qualname: tweetlog
+    propagate: 0
 
 handlers:
   appHandler:
     class: logging.StreamHandler
-    formatter: consoleFormatter
+    formatter: basicFormatter
     level: INFO
+
+  # Tweet log
+  tweetHandler:
+    class: logging.handlers.TimedRotatingFileHandler
+    formatter: basicFormatter
+    level: INFO
+    filename: /var/log/bot/tweet.log
+    when: 'D'
+    interval: 1
+    backupCount: 7
 
 root:
   level: INFO
