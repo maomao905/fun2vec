@@ -7,10 +7,12 @@ from api.twitter import Twitter
 import numpy as np
 import json
 from time import sleep
+from word import Word
 import logging.config
 config = load_config('file')
 logging.config.dictConfig(load_config('log'))
 _logger = logging.getLogger(__name__)
+_tweet_logger = logging.getLogger('tweetlog.' + __name__) # tweet log
 # modelは最初に読み込みしておく
 
 # Streaming APIでずっと調べる
@@ -46,9 +48,10 @@ def main():
     """
     Detect particular hashtag
     """
+    _word = Word()
     fun2vec = Model('fun2vec')
     cluster_labels = _unpickle(config['cluster']['labels'])
-    __TAG = '#趣味を教えて'
+    __TAG = '#次の趣味を教えて'
     t = Twitter()
     t._logger.info('Requsting to Twitter API...')
     res = t.search(__TAG)
@@ -58,12 +61,13 @@ def main():
             try:
                 if line:
                     info = json.loads(line.decode('utf-8'))
-                    user_funs = info['text'].replace(__TAG, '').strip().split()
-                    _logger.info(f"@{info['user']['screen_name']}", user_funs)
+                    input_text = info['text'].replace(__TAG, '').strip()
+                    user_funs = _word.preprocess(input_text)
+                    _tweet_logger.info(f"@{info['user']['screen_name']}", user_funs)
                     text = get_next_funs(user_funs, cluster_labels, fun2vec)
                     if text:
                         t.send(f"@{info['user']['screen_name']} {text}", reply_to=info['id'])
-                    _logger.info(f"@{info['user']['screen_name']}", text)
+                    _tweet_logger.info(f"@{info['user']['screen_name']}", text)
             except Exception as e:
                 t._logger.error(e)
                 sleep(15*60)
@@ -74,6 +78,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # _word = Word()
+    # res = _word.preprocess('')
+    # _tweet_logger.info(res)
     # make_word_cluster_label_data()
     # fun2vec = Model('fun2vec')
     # cluster_labels = _unpickle(config['cluster']['labels'])
