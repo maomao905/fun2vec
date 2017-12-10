@@ -220,10 +220,8 @@ if __name__ == '__main__':
     # 37082.201429787434
     # 37977.87518045306
     # 40493.79704496562
-    embeddings = Model.load_model('word2vec').wv.syn0norm
-    cluster_by_kmeans(embeddings, 800)
-    # check_kmeans(['将棋', 'プログラミング', 'ビリヤード'])
-    # check_kmeans(['将棋', 'サッカー', '野球', 'ロッテ', 'パソコン', 'タブレット', 'スマホ', '携帯'])
-    # check_kmeans(['Ruby', 'C', 'プログラミング', 'Linux', 'Vim', 'エンジニア', 'スマホ', 'VR'])
-    # check_kmeans(['ビリヤード', 'ダーツ', 'ボウリング', '水泳', 'ドライブ', '山登り', 'ダイビング', '育児'])
-    # cluster_hierarchical()
+    # embeddings = Model.load_model('word2vec').wv.syn0norm
+    # cluster_by_kmeans(embeddings, 800)
+    check_kmeans(['将棋', 'サッカー', '野球', 'ロッテ', 'パソコン', 'タブレット',\
+    'スマホ', '携帯', 'Ruby', 'C', 'プログラミング', 'Linux', 'Vim', 'エンジニア', 'スマホ', 'VR',\
+    'ビリヤード', 'ダーツ', 'ボウリング', '水泳', 'ドライブ', '山登り', 'ダイビング', '育児'])

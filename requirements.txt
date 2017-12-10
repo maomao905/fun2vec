@@ -5,7 +5,7 @@ SQLAlchemy==1.2.0b2
 pymysql==0.7.11
 Flask==0.12
 Flask-Script==2.0.6
-gensim==3.0.0
+gensim==3.2.0
 mecab-python3==0.7
 prompt-toolkit==1.0.15
 Pygments==2.2.0
