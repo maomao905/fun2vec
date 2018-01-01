@@ -51,7 +51,7 @@ def main():
     _word = Word()
     fun2vec = Model('fun2vec')
     cluster_labels = _unpickle(config['cluster']['labels'])
-    __TAG = '#次の趣味を教えて'
+    __TAG = '#おすすめの趣味を教えて'
     t = Twitter()
     t._logger.info('Requsting to Twitter API...')
     res = t.search(__TAG)
@@ -76,8 +76,8 @@ def main():
         t._logger.error('Requst to Twitter API failed')
         res.raise_for_status()
 
-if __name__ == '__main__':
-    main()
+main()
+# if __name__ == '__main__':
     # _word = Word()
     # res = _word.preprocess('')
     # _tweet_logger.info(res)
