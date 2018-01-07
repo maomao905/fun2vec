@@ -62,7 +62,9 @@ def main():
                 if line:
                     info = json.loads(line.decode('utf-8'))
                     input_text = info['text'].replace(__TAG, '').strip()
-                    user_funs = _word.preprocess(input_text)
+                    # 区切りで入力された場合は形態素解析しない方が正確なのでsplitで分けるだけにする
+                    user_funs = input_text.split()
+                    user_funs = _word.preprocess(input_text) if len(user_funs) < 3 else user_funs
                     _tweet_logger.info(f"@{info['user']['screen_name']}", user_funs)
                     text = get_next_funs(user_funs, cluster_labels, fun2vec)
                     if text:
