@@ -37,40 +37,21 @@ def get_next_funs(funs, cluster_labels, fun2vec):
     if len(funs) == 0:
         return text
     elif len(funs) < 3:
-        text += f'あなたの趣味や興味をなるべく多く入れたほうが正確になります。'
+        text += f'あなたの趣味や興味をなるべく多く入れた方が正確になります。'
     user_labels = list(filter(lambda x: x != None, [cluster_labels.get(fun) for fun in funs]))
     # 入力文と同じクラスタに入るものは除く
     words_without_same_cluster = [word for word, sim in fun2vec.most_similar(funs, topn=50) if cluster_labels.get(word) not in user_labels]
     # さらに結果の中で同じクラスタはまとめて表示
-    result_cluster_labels = OrderedDict()
+    result = []
+    result_cluster_labels = []
     for w in words_without_same_cluster:
         label = cluster_labels.get(w)
-        if label is None:
-            result_cluster_labels[w] = [w]
-        elif label in result_cluster_labels:
-            # 同じクラスタの結果が３つより多くある場合は表示しない
-            if len(result_cluster_labels[label]) > 3:
-                continue
-            result_cluster_labels[label].append(w)
-        else:
-            result_cluster_labels[label] = [w]
-
-        # 結果が10個のクラスタになったら終了
-        if len(result_cluster_labels) >= 10:
+        if label not in result_cluster_labels:
+            result.append(w)
+        result_cluster_labels.append(label)
+        if len(result) >= 10:
             break
-    results = []
-    for idx, words in enumerate(result_cluster_labels.values(), 1):
-        if len(words) == 1:
-            results.append(words[0])
-        else:
-            results.append(f'({",".join(words)})')
-
-    text = 'おすすめの趣味は順番に、'
-    for idx, res in enumerate(results):
-        if len(text + res) + 1 >= 140:
-            break
-        text += res if idx == 0 else f'/{res}'
-
+    text += 'おすすめの趣味は順番に、' + '/'.join(result)
     return text
 
 def main():
@@ -94,11 +75,11 @@ def main():
                     # 区切りで入力された場合は形態素解析しない方が正確なのでsplitで分けるだけにする
                     user_funs = input_text.split()
                     user_funs = _word.preprocess(input_text) if len(user_funs) < 3 else user_funs
-                    _tweet_logger.info(f"@{info['user']['screen_name']}", user_funs)
+                    _tweet_logger.info(f"Received from @{info['user']['screen_name']} {user_funs}")
                     text = get_next_funs(user_funs, cluster_labels, fun2vec)
                     if text:
                         t.send(f"@{info['user']['screen_name']} {text}", reply_to=info['id'])
-                    _tweet_logger.info(f"@{info['user']['screen_name']}", text)
+                    _tweet_logger.info(f"Reply to @{info['user']['screen_name']} {text}")
             except Exception as e:
                 t._logger.error(e)
                 sleep(15*60)
@@ -109,10 +90,15 @@ def main():
 
 main()
 # if __name__ == '__main__':
-    # _word = Word()
-    # res = _word.preprocess('')
-    # _tweet_logger.info(res)
-    # make_word_cluster_label_data()
-    # fun2vec = Model('fun2vec')
-    # cluster_labels = _unpickle(config['cluster']['labels'])
-    # print(get_next_funs(['将棋', 'プログラミング', 'ビリヤード'], cluster_labels, fun2vec))
+#     user_funs = (['麻雀', '酒', '研究', '読書', '漫画'], \
+#         ['将棋', 'ビリヤード', 'プログラミング', 'サッカー'], \
+#         ['漫画', '小説', '映画', 'テニス', 'カフェ'], \
+#         ['ジャニーズ', 'ラジオ', '音楽', '楽器', '本'], \
+#         ['ランニング', '映画', '読書'], \
+#         ['将棋', 'ビリヤード', 'Netflix'])
+#     fun2vec = Model('fun2vec')
+#     cluster_labels = _unpickle(config['cluster']['labels'])
+#     for _user_funs in user_funs:
+#         print('-' * 50)
+#         print('今の趣味:', _user_funs)
+#         print(get_next_funs(_user_funs, cluster_labels, fun2vec))
