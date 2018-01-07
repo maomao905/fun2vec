@@ -39,9 +39,38 @@ def get_next_funs(funs, cluster_labels, fun2vec):
     elif len(funs) < 3:
         text += f'あなたの趣味や興味をなるべく多く入れたほうが正確になります。'
     user_labels = list(filter(lambda x: x != None, [cluster_labels.get(fun) for fun in funs]))
-    result = [word for word, sim in fun2vec.most_similar(funs, topn=50) if cluster_labels.get(word) not in user_labels]
-    result = result[:10]
-    text += 'あなたに合う趣味は順番に、' + '/'.join(result)
+    # 入力文と同じクラスタに入るものは除く
+    words_without_same_cluster = [word for word, sim in fun2vec.most_similar(funs, topn=50) if cluster_labels.get(word) not in user_labels]
+    # さらに結果の中で同じクラスタはまとめて表示
+    result_cluster_labels = OrderedDict()
+    for w in words_without_same_cluster:
+        label = cluster_labels.get(w)
+        if label is None:
+            result_cluster_labels[w] = [w]
+        elif label in result_cluster_labels:
+            # 同じクラスタの結果が３つより多くある場合は表示しない
+            if len(result_cluster_labels[label]) > 3:
+                continue
+            result_cluster_labels[label].append(w)
+        else:
+            result_cluster_labels[label] = [w]
+
+        # 結果が10個のクラスタになったら終了
+        if len(result_cluster_labels) >= 10:
+            break
+    results = []
+    for idx, words in enumerate(result_cluster_labels.values(), 1):
+        if len(words) == 1:
+            results.append(words[0])
+        else:
+            results.append(f'({",".join(words)})')
+
+    text = 'おすすめの趣味は順番に、'
+    for idx, res in enumerate(results):
+        if len(text + res) + 1 >= 140:
+            break
+        text += res if idx == 0 else f'/{res}'
+
     return text
 
 def main():
