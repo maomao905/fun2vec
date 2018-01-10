@@ -30,7 +30,7 @@ ex) I love xxx... I am into xxx... My intests are xxx-> Extract xxx
 3. Create word2vec with the data created by step 2 (called fun2vec)  
 4. K-Means Clustering with the data created by step 1  
 
-Final response: get most similar words from fun2vec but exclude words in which cluster input words are clustered, in order not to suggest too close hobbies like (given running suggest swimming, given beer suggest wine)
+Final response: get most similar words from fun2vec but exclude words in which cluster input words are clustered, in order not to suggest too close hobbies like (given `running` suggest `swimming`, given `beer` suggest `wine`)
 
 ### Test Model  
 ```bash
