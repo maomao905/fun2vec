@@ -19,10 +19,11 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 0. 辞書構築 [new_word.csv](data/dictionary/new_word.csv) + [close_word.csv](data/dictionary/close_word.csv) + [close_word_original.csv](data/dictionary/close_word_original.csv) を使って独自辞書を作成
 1. 形態素解析 [morpheme.py](morpheme.py)
 2. 単語を正規化 [word.py](word.py)
-3. ストップワードは無視 [stop_words.txt](data/stop_words.txt)
+3. ストップワードは無視 [stop_words.txt](data/dictionary/stop_words.txt)
 
 ### close word作り方  
-- 並列なものだけにする。  
+close word: 表記ゆれに対応するために類義語はまとめる  
+- 並列なものだけにする。   
 ok 俳優,俳優さん  
 bad 俳優,若手俳優  
 bad ワイン, 白ワイン  
