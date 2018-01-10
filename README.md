@@ -78,23 +78,6 @@ $ python manage.py db init_db
 $ pip install -r requirements.txt
 ```
 
-### Mecabオリジナル辞書コンパイル
-```bash
-$ /usr/local/Cellar/mecab/0.996/libexec/mecab/mecab-dict-index \
--d /usr/local/lib/mecab/dic/mecab-ipadic-neologd \
--u data/dictionary/original_dic.dic \
--f utf-8 \
--t utf-8 \
-data/dictionary/original_dic.csv
-```
-
-### テスト
-実行例
-```bash
-$ python -m unittest tests.test_corpus
-$ py.test <test_file>
-```
-
 #### 補足  
 Twitterデータscraping時に以下のようなエラー(絵文字が入っていると文字コードエラーになる)になった場合
 ```
