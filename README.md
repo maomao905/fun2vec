@@ -37,19 +37,21 @@ Twitterユーザーのプロフィール情報をAPIから取得(600万件)
 
 ### モデル作り方  
 1. Twitter profileからword2vec作成  
-2. Twitter profileから趣味や興味に関するフレーズを取得
+2. Twitter profileから趣味や興味に関するフレーズを取得 [corpus_fun2vec.py](corpus/corpus_fun2vec.py#L17#L23)
 ```
 ex) ...趣味: アニメ/読書/映画... -> アニメ, 読書, 映画
 ex) xxが好き, xxにはまってる, 趣味はxx -> xxを取得
 ```
-詳細: [corpus_fun2vec.py](corpus/corpus_fun2vec.py#L17#L23)
+3. 2で取得した趣味ベクトルをword2vecと同じようにして作成(fun2vecとする)  
+4. word2vecをKMEANSでクラスタリング  
+最終レスポンス: fun2vecで類似度が高いものを出す。ただしそのうち同じクラスタからにあるものは除外(サッカー-フットサル, 将棋-囲碁のような近すぎる趣味を提示しないため)
 
 ### モデル精度確認  
 引数は何個でも指定可能  
 ※ ただし最新のモデルはGCSに保存しておりリポジトリにはない
 ```bash
 $ python model.py -m fun2vec
-words> 機械学習　アニメ　ビール
+words> ビリヤード 将棋 ドライブ
 ```
 
 ### タスク実行コマンド  
