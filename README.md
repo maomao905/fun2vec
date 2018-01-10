@@ -20,15 +20,16 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 1. 形態素解析 [morpheme.py](morpheme.py)
 2. 単語を正規化 [word.py](word.py)
 3. ストップワードは無視 [stop_words.txt](data/dictionary/stop_words.txt)
-
-### close word作り方  
+<summary> close word作り方 </summary>
+<details>
 close word: 表記ゆれに対応するために類義語はまとめる  
 - 並列なものだけにする。   
 ok 俳優,俳優さん  
 bad 俳優,若手俳優  
 bad ワイン, 白ワイン  
 ただし、二つの後の意味の違いが意味をなさないようなものはok  
-ok 代表,副代表
+ok 代表,副代表  
+</details>
 
 ### モデル精度確認  
 引数は何個でも指定可能  
