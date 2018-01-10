@@ -3,7 +3,7 @@ Fun2vec is word2vec vector about hobbies and interest.
 Suggest next possible funs from the current your interests.  
 
 ### Usage
-Tweet `#おすすめの趣味を教えて xxx` xxx are current your hobbies or interests  
+Tweet `#おすすめの趣味を教えて xxx`  (xxx are current your hobbies or interests)        
 Bot will reply and suggest hobbies or funs 
 ```
 ex)
