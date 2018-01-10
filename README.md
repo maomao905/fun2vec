@@ -22,29 +22,37 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 3. ストップワードは無視 [stop_words.txt](data/dictionary/stop_words.txt)
 <summary> close word作り方 </summary>
 <details>
-  <p> close word: 表記ゆれに対応するために類義語はまとめたもの    </p>
-  <p> ・並列なものだけにする。   </p>
+  <p> close word: 表記ゆれに対応するために類義語はまとめたもの</p>
+  <p> ・並列なものだけにする。</p>
   <ul>
-    <li>ok 俳優,俳優さん  </li>
-    <li>bad 俳優,若手俳優  </li>
-    <li>bad ワイン, 白ワイン  </li>
+    <li>ok 俳優,俳優さん</li>
+    <li>bad 俳優,若手俳優</li>
+    <li>bad ワイン, 白ワイン</li>
   </ul>
-  <p> ただし、二つの後の意味の違いが意味をなさないようなものはok  </p>
+  <p> ただし、二つの後の意味の違いが意味をなさないようなものはok </p>
   <ul>
-    <li>ok 代表,副代表  </li>
+    <li>ok 代表,副代表</li>
   </ul>
 </details>
 
+### モデル作り方  
+1. Twitter profileからword2vec作成  
+2. Twitter profileから趣味や興味に関するフレーズを取得
+```
+ex) ...趣味: アニメ/読書/映画... -> アニメ, 読書, 映画
+ex) xxが好き, xxにはまってる, 趣味はxx -> xxを取得
+```
+詳細: [corpus_fun2vec.py](corpus/corpus_fun2vec.py#L17#L23)
+
 ### モデル精度確認  
 引数は何個でも指定可能  
-引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力  
 ※ ただし最新のモデルはGCSに保存しておりリポジトリにはない
 ```bash
 $ python model.py -m fun2vec
 words> 機械学習　アニメ　ビール
 ```
 
-### コマンド使い方     
+### タスク実行コマンド  
 コマンド一覧取得
 ```bash
 $ python manage.py
