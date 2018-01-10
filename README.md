@@ -22,13 +22,17 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 3. ストップワードは無視 [stop_words.txt](data/dictionary/stop_words.txt)
 <summary> close word作り方 </summary>
 <details>
-close word: 表記ゆれに対応するために類義語はまとめる  
-- 並列なものだけにする。   
-ok 俳優,俳優さん  
-bad 俳優,若手俳優  
-bad ワイン, 白ワイン  
-ただし、二つの後の意味の違いが意味をなさないようなものはok  
-ok 代表,副代表  
+  <p> close word: 表記ゆれに対応するために類義語はまとめたもの    </p>
+  <p> ・並列なものだけにする。   </p>
+  <ul>
+    <li>ok 俳優,俳優さん  </li>
+    <li>bad 俳優,若手俳優  </li>
+    <li>bad ワイン, 白ワイン  </li>
+  </ul>
+  <p> ただし、二つの後の意味の違いが意味をなさないようなものはok  </p>
+  <ul>
+    <li>ok 代表,副代表  </li>
+  </ul>
 </details>
 
 ### モデル精度確認  
