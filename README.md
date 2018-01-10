@@ -1,100 +1,84 @@
 ## Fun2vec
-興味・関心・趣味ベクトル  
-この人は〇〇が好きで〇〇が好きであると〇〇が好きである可能性が高い  
-そこには関係性があるはずでその関係性がわかったら面白い  
+Fun2vec is word2vec vector about hobbies and interest.  
+Suggest next possible funs from the current your interests.  
 
-### How to use
-Twitterで
-`#おすすめの趣味を教えて xxx` とつぶやくとおすすめの趣味が返ってくる  
-例)   
+### Usage
+Tweet `#おすすめの趣味を教えて xxx` xxx are current your hobbies or interests  
+then reply and suggest hobbies or funs 
 ```
-U: #おすすめの趣味を教えて ラーメン 野球 読書 映画
-B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボルダリング/ビリヤード/クロスバイク/スイーツ/ヒトカラ/将棋/梅酒
+ex)
+User: #おすすめの趣味を教えて 麻雀 酒 研究 読書 漫画
+Bot: おすすめの趣味は順番に、将棋/TVゲーム/天体観測/ヒトカラ/サイクリング/推理小説/ビリヤード/ボードゲーム/ボルダリング/クロスバイク
 ```
 
-### データ収集
-Twitterユーザーのプロフィール情報をAPIから取得(600万件)
+### Data Source
+Twitter profiles of 6 million users (mainly Japanese)
 
-### 前処理
-0. 辞書構築 [new_word.csv](data/dictionary/new_word.csv) + [close_word.csv](data/dictionary/close_word.csv) + [close_word_original.csv](data/dictionary/close_word_original.csv) を使って独自辞書を作成
-1. 形態素解析 [morpheme.py](morpheme.py)
-2. 単語を正規化 [word.py](word.py)
-3. ストップワードは無視 [stop_words.txt](data/dictionary/stop_words.txt)
-<summary> close word作り方 </summary>
-<details>
-  <p> close word: 表記ゆれに対応するために類義語はまとめたもの</p>
-  <p> ・並列なものだけにする。</p>
-  <ul>
-    <li>ok 俳優,俳優さん</li>
-    <li>bad 俳優,若手俳優</li>
-    <li>bad ワイン, 白ワイン</li>
-  </ul>
-  <p> ただし、二つの後の意味の違いが意味をなさないようなものはok </p>
-  <ul>
-    <li>ok 代表,副代表</li>
-  </ul>
-</details>
+### Preprocessing
+0. Create Dictionary [new_word.csv](data/dictionary/new_word.csv) + [close_word.csv](data/dictionary/close_word.csv) + [close_word_original.csv](data/dictionary/close_word_original.csv) 
+1. Morphological Analysis [morpheme.py](morpheme.py)
+2. Word Normalization [word.py](word.py)
+3. Ignore stopwords [stop_words.txt](data/dictionary/stop_words.txt)
 
-### モデル作り方  
-1. Twitter profileからword2vec作成  
-2. Twitter profileから趣味や興味に関するフレーズを取得 [corpus_fun2vec.py](corpus/corpus_fun2vec.py#L17#L23)
+### Create Model  
+1. Create word2vec from Twitter profiles text  
+2. Extract phrases about hobbies and interests from Twitter profiles [corpus_fun2vec.py](corpus/corpus_fun2vec.py#L17#L23)
 ```
-ex) ...趣味: アニメ/読書/映画... -> アニメ, 読書, 映画
-ex) xxが好き, xxにはまってる, 趣味はxx -> xxを取得
+ex) ...Hobbies: Anime/Reading/Movies... -> Extract Anime, Reading, Movies
+ex) I love xxx... I am into xxx... My intests are xxx-> Extract xxx
 ```
-3. 2で取得した趣味ベクトルをword2vecと同じようにして作成(fun2vecとする)  
-4. word2vecをKMEANSでクラスタリング  
+3. Create word2vec with the data created by step 2 (called fun2vec)  
+4. K-Means Clustering with the data created by step 1  
 
-最終レスポンス: fun2vecで類似度が高いものを出す。ただしそのうち同じクラスタからにあるものは除外  
-(サッカー-フットサル, 将棋-囲碁のような近すぎる趣味を提示しないため)
+Final response: After get similar words from fun2vec, exclude the results from same cluster in order not to suggest too close hobbies
+(running-swimming, beer-wine)
 
-### モデル精度確認  
+### Test Model  
 ```bash
 $ python model.py -m fun2vec
 words> ビリヤード 将棋 ドライブ
 ```
 
-### タスク実行コマンド  
-コマンド一覧取得
+### Task Commands  
+List the available commands
 ```bash
 $ python manage.py
 ```
-コマンド実行例
+ex)
 ```bash
 $ python manage.py model create_fun2vec
 ```
 
-### 環境構築  
-・MySQLインストール  
+### Installation  
+- Install MySQL  
 ```bash
-#テーブル作成
+# Initialize DB
 $ python manage.py db init_db
 ```
-・Python3インストール (Python3.6)  
-・MeCab + ipadic-neologd インストール  
-・Python moduleインストール   
+- Python3.6
+- MeCab + ipadic-neologd  
+- Python module   
 ```bash
 $ pip install -r requirements.txt
 ```
 
 #### 補足  
-Twitterデータscraping時に以下のようなエラー(絵文字が入っていると文字コードエラーになる)になった場合
+When you scrape Twitter data, char code error might occur when text includes emoji.
 ```
 Warning: (1366, "Incorrect string value: '\\xF0\\x9F\\x92\\xB8\\xE8\\xB2...' for column 'description' at row 1")
 ```
-以下を編集
+Then edit following
 ```
 # /etc/my.cnf
 [mysqld]
 ...
 character-set-server=utf8mb4
 ```
-MySQL再起動して確認
+Restart MySQL and check
 ```
 > show variables like "chara%";
 ```
-DB文字コードを修正してもテーブルの文字コードがutf8のままの場合、そちらが優先されてしまうので、
-テーブル文字コードも修正
+Might also need the following command  
 ```
 > ALTER TABLE fun.users MODIFY COLUMN description TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ```
