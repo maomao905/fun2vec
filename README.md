@@ -13,9 +13,7 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 ```
 
 ### データ収集
-- Twitter profileをAPIから取得
-- Twitterで誰が誰をフォローしているかの情報をAPIから取得
-- フォロー関係から興味・趣味データを拡大していく
+- Twitter profileをAPIから取得(600万件)
 
 ### 前処理
 0. 辞書構築 [new_word.csv](data/dictionary/new_word.csv) + [close_word.csv](data/dictionary/close_word.csv) + [close_word_original.csv](data/dictionary/close_word_original.csv) を使って独自辞書を作成
@@ -31,23 +29,12 @@ bad ワイン, 白ワイン
 ただし、二つの後の意味の違いが意味をなさないようなものはok  
 ok 代表,副代表
 
-### モデル作成
-- word2vec corpus作成  
-DBから全profile取得して形態素解析してcorpus保存
-- fun2vec corpus作成  
-DBからprofile取得して興味部分を抽出して保存
-- word2vec model作成  
-- fun2vec corpus作成  
-この際にuser_idを保存する必要がある  
-- fun2vec clustered corpus作成  
-fun2vecの興味をdistinctiveにするために、fun2vecのcorpusをword2vecのmost_similarで似た興味をグループ化  
-- fun2vec clustered model作成
-
 ### モデル精度確認  
 引数は何個でも指定可能  
-引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力
+引数に指定した興味・関心・趣味ベクトルが足しあわされた結果を出力  
+※ ただし最新のモデルはGCSに保存しておりリポジトリにはない
 ```bash
-$ python fun2vec.py
+$ python model.py -m fun2vec
 words> 機械学習　アニメ　ビール
 ```
 
@@ -58,16 +45,8 @@ $ python manage.py
 ```
 コマンド実行例
 ```bash
-$ python manage.py fun2vec create_fun2vec_model
+$ python manage.py model create_fun2vec
 ```
-
-|親コマンド|子コマンド|説明|
-|---|---|---|
-|db|init_db|全てのテーブルを新規作成します|
-|twitter|scrape|TwitterプロフィールデータをTwitter APIを叩いて収集します|
-|fun2vec|create_word2vec|Twitterプロフィールデータを形態素解析し、分かち書きした後word2vecモデルを新規作成します|
-|fun2vec|create_fun2vec|既存のword2vec, 辞書とコーパスを使い最適な興味ベクトルを作る|
-|fun2vec|check_vocab|vocabraryにどのような単語があるか調べる時に使う|
 
 ### 環境構築  
 ・MySQLインストール  
@@ -75,9 +54,9 @@ $ python manage.py fun2vec create_fun2vec_model
 #テーブル作成
 $ python manage.py db init_db
 ```
-・python3インストール  
-・MeCab + ipadic-neologd インストール  
-・python moduleインストール
+・Python3インストール (Python3.6)  
+・MeCab + ipadic-neologd インストール  
+・Python moduleインストール
 ```bash
 $ pip install -r requirements.txt
 ```
@@ -90,12 +69,6 @@ $ /usr/local/Cellar/mecab/0.996/libexec/mecab/mecab-dict-index \
 -f utf-8 \
 -t utf-8 \
 data/dictionary/original_dic.csv
-```
-
-### 秘密情報のパスワード  
-秘密情報を暗号化・復号化するにはパスワードが必要です。  
-```bash
-$ export FUN2VEC_SECRET_PASSWORD=xxxxx
 ```
 
 ### テスト
