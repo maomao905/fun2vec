@@ -71,8 +71,8 @@ $ python manage.py model create_fun2vec
 $ python manage.py db init_db
 ```
 ・Python3インストール (Python3.6)  
-・MeCab + ipadic-neologd インストール  
-・Python moduleインストール  
+・MeCab + ipadic-neologd インストール  
+・Python moduleインストール   
 ```bash
 $ pip install -r requirements.txt
 ```
