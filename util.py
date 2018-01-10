@@ -37,29 +37,6 @@ def _pickle(objects, file_name, compress=True, protocol=pickle.HIGHEST_PROTOCOL)
         with open(file_name, 'wb') as f:
             pickle.dump(objects, f, protocol=protocol)
 
-# class FrozenStructMixin:
-#     __slots__ = ('_data',)
-#     def __init_subclass__(cls, **kwargs):
-#         fields = kwargs['fields']
-#         cls.FIELDS = tuple(fields)
-#         for i, field in enumerate(fields):
-#             setattr(cls, field, property(fget=partial(lambda idx, self: self._data[idx], i)))
-#
-#     def __new__(cls, *args, **kwargs):
-#         super_kwargs = {k: v for k, v in kwargs.items() if k not in cls.FIELDS}
-#         return super().__new__(cls, *args, **super_kwargs)
-#
-#     def __init__(self, *args, **kwargs):
-#         super_kwargs = {k: v for k, v in kwargs.items() if k not in self.FIELDS}
-#         super().__init__(*args, **super_kwargs)
-#         if hasattr(self, '_data'):
-#             return
-#         self._data = tuple(kwargs.get(f) for f in self.FIELDS)
-#
-#     def __repr__(self):
-#         keyvals = ','.join(f'{f}={v}' for f, v in zip(self.FIEDLS, self._data))
-#         return f'{self.__class__.__name__}({keyvals})'
-
 def find_close_words():
     import difflib
     import pandas as pd
