@@ -3,23 +3,32 @@
 この人は〇〇が好きで〇〇が好きであると〇〇が好きである可能性が高い  
 そこには関係性があるはずでその関係性がわかったら面白い  
 
+### How to use
+Twitterで
+`#おすすめの趣味を教えて xxx` とつぶやくとおすすめの趣味が返ってくる  
+例)   
+```
+U: #おすすめの趣味を教えて ラーメン 野球 読書 映画
+B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボルダリング/ビリヤード/クロスバイク/スイーツ/ヒトカラ/将棋/梅酒
+```
+
 ### データ収集
 - Twitter profileをAPIから取得
 - Twitterで誰が誰をフォローしているかの情報をAPIから取得
 - フォロー関係から興味・趣味データを拡大していく
 
 ### 前処理
-0. 辞書構築 [new_word.tsv](data/new_word.tsv) + [close_word.tsv](data/close_word.tsv) + [close_word_original.tsv](data/close_word_original.tsv) を使って独自辞書を作成
-1. 形態素解析 [morph.py](morph.py)
-2. 単語を正規化 [clean_word.py](clean_word.py)
+0. 辞書構築 [new_word.csv](data/new_word.csv) + [close_word.tsv](data/close_word.csv) + [close_word_original.csv](data/close_word_original.csv) を使って独自辞書を作成
+1. 形態素解析 [morpheme.py](morpheme.py)
+2. 単語を正規化 [word.py](word.py)
 3. ストップワードは無視 [stop_words.txt](data/stop_words.txt)
 
-### close word作り方
+### close word作り方  
 - 並列なものだけにする。  
 ok 俳優,俳優さん  
 bad 俳優,若手俳優  
-bad ワイン, 白ワイン
-ただし、二つの後の意味の違いが意味をなさないようなものはok
+bad ワイン, 白ワイン  
+ただし、二つの後の意味の違いが意味をなさないようなものはok  
 ok 代表,副代表
 
 ### モデル作成
