@@ -4,7 +4,7 @@ Suggest next possible funs from the current your interests.
 
 ### Usage
 Tweet `#おすすめの趣味を教えて xxx` xxx are current your hobbies or interests  
-then reply and suggest hobbies or funs 
+Bot will reply and suggest hobbies or funs 
 ```
 ex)
 User: #おすすめの趣味を教えて 麻雀 酒 研究 読書 漫画
@@ -30,8 +30,7 @@ ex) I love xxx... I am into xxx... My intests are xxx-> Extract xxx
 3. Create word2vec with the data created by step 2 (called fun2vec)  
 4. K-Means Clustering with the data created by step 1  
 
-Final response: After get similar words from fun2vec, exclude the results from same cluster in order not to suggest too close hobbies
-(running-swimming, beer-wine)
+Final response: get most similar words from fun2vec but exclude words in which cluster input words are clustered, in order not to suggest too close hobbies like (given running suggest swimming, given beer suggest wine)
 
 ### Test Model  
 ```bash
@@ -62,7 +61,7 @@ $ python manage.py db init_db
 $ pip install -r requirements.txt
 ```
 
-#### 補足  
+#### Note  
 When you scrape Twitter data, char code error might occur when text includes emoji.
 ```
 Warning: (1366, "Incorrect string value: '\\xF0\\x9F\\x92\\xB8\\xE8\\xB2...' for column 'description' at row 1")
