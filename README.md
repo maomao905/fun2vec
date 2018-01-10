@@ -13,7 +13,7 @@ B: おすすめの趣味は順番に、食べ歩き/球技/推理小説/ボル�
 ```
 
 ### データ収集
-- Twitter profileをAPIから取得(600万件)
+Twitterユーザーのプロフィール情報をAPIから取得(600万件)
 
 ### 前処理
 0. 辞書構築 [new_word.csv](data/dictionary/new_word.csv) + [close_word.csv](data/dictionary/close_word.csv) + [close_word_original.csv](data/dictionary/close_word_original.csv) を使って独自辞書を作成
