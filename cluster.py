@@ -80,11 +80,6 @@ def cluster_hierarchical():
 
     l = linkage(model.syn0norm[:TEST_NUM], method='complete', metric='cosine')
 
-    # plt.figure(figsize=(25, 10))
-    # plt.title('Hierarchical Clustering Dendrogram')
-    # plt.ylabel('word')
-    # plt.xlabel('distance')
-
     dendrogram(
         l,
         leaf_font_size=8.,  # font size for the x axis labels
@@ -217,9 +212,6 @@ def find_topic():
     pprint(lda.show_topics(num_words=20))
 
 if __name__ == '__main__':
-    # 37082.201429787434
-    # 37977.87518045306
-    # 40493.79704496562
     # embeddings = Model.load_model('word2vec').wv.syn0norm
     # cluster_by_kmeans(embeddings, 800)
     check_kmeans(['将棋', 'サッカー', '野球', 'ロッテ', 'パソコン', 'タブレット',\

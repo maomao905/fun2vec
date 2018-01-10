@@ -8,7 +8,7 @@ from morpheme import WordParser
 
 """
 Create original dictionary
-Merge new_word.tsv + close_word.tsv + close_word_original.tsv
+Merge new_word.csv + close_word.csv + close_word_original.csv
 Final output: original_dict.csv
 """
 logging.config.dictConfig(load_config('log'))
